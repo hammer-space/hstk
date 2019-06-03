@@ -27,6 +27,7 @@ setup(
     author_email='support@hammerspace.com',
     packages=find_packages(),
     install_requires=['Click'],
+    license='Apache License 2.0',
     url="https://github.com/hammer-space/hstk",
     entry_points={
         'console_scripts': [
