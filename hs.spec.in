@@ -1,0 +1,32 @@
+Name:           hs
+Version:        @VERSION@
+Release:        @RELEASE@%{?dist}
+Summary:        CLI utility for manipulating metadata in the Hammerspace namespace over the shadow filesystem
+
+License:        proprietary
+BuildArch:      noarch
+URL:            http://hammerspace.com
+Prefix:         %{_bindir}
+Source0:        %{name}-%{version}.tar.gz
+Source1:        hs_bash_completion
+
+Requires:       python2-click
+
+%description
+CLI utility for manipulating metadata in the Hammerspace namespace over the shadow filesystem
+
+%prep
+%autosetup
+
+%install
+%__python setup.py install --root $RPM_BUILD_ROOT
+mkdir -p $RPM_BUILD_ROOT/etc/bash_completion.d/
+%{__install} -p -m 644 %{SOURCE1} $RPM_BUILD_ROOT/etc/bash_completion.d/
+
+%files
+%defattr(-,root,root,-)
+/usr/bin/hs
+/usr/lib/python2.7/site-packages/*
+/etc/bash_completion.d/*
+
+%changelog
