@@ -23,6 +23,8 @@ with open(path.join(here, release_file)) as f:
     version=f.readline()
     version = version.strip()
 
+requirements = open('requirements.txt').readlines()
+
 setup(
     name=pkg_name,
     version=version,
@@ -32,7 +34,7 @@ setup(
     author='Hammerspace Inc',
     author_email='support@hammerspace.com',
     packages=find_packages(),
-    install_requires=['Click'],
+    install_requires=requirements,
     license='Apache License 2.0',
     url="https://github.com/hammer-space/hstk",
     entry_points={
