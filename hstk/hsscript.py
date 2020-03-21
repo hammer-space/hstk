@@ -13,8 +13,11 @@
 
 import sys
 import random
-reload(sys)
-sys.setdefaultencoding('utf8')
+import six
+
+six.moves.reload_module(sys)
+if (sys.version_info < (3, 0)):
+    sys.setdefaultencoding('utf8')
 
 class HSExp(object):
     def __init__(self, exp=None, string=False, input_json=False, unbound=False):
@@ -43,7 +46,7 @@ def _build_eval(**kwargs):
             tset.add(tkey)
     if 'compact' in tset and 'raw' in tset:
         raise RuntimeError("Select only one of compact / raw")
-    ret = 'eval'        
+    ret = 'eval'
     if 'compact' in tset:
         ret += '_compact'
     if 'raw' in tset:
@@ -159,14 +162,22 @@ def _build_inheritance(**kwargs):
     raise RuntimeError("Shouldn't reach this")
 
 def _do_update_kwargs(def_kwargs, kwargs):
-    for k, v in def_kwargs.iteritems():
+    for k, v in def_kwargs.items():
         if k not in kwargs:
             kwargs[k] = v
 
 def _clean_str(value):
-    """Allow the use of / in filenames by remapping the character to a unicode character Hammerscript treats as /"""
+    """
+    1) Append a random suffix to avoid caching returning stale data
+    2) Allow the use of / in filenames by remapping the character to a unicode
+       character Hammerscript treats as /
+    """
     value += "/*" + hex(random.randint(0,99999999)) + "*/"
-    return value.replace('/', unichr(0x2215).encode('UTF-8'))
+    if (sys.version_info < (3, 0)):
+        ret = value.replace('/', six.unichr(0x2215).encode('UTF-8'))
+    else:
+        ret = value.replace('/', six.unichr(0x2215))
+    return ret
 
 
 def _gen_list_func(gen_mdtype=None):

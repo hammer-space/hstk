@@ -16,9 +16,9 @@ import subprocess as sp
 import functools
 import sys
 import os
-import cStringIO as StringIO
 import json
 import pprint
+import six
 import click
 import hstk.hsscript as hss
 
@@ -230,14 +230,14 @@ class ShadCmd(object):
             if len(ret.keys()) > 1:
                 print_filenames = True
 
-            for k, v in ret.iteritems():
+            for k, v in ret.items():
                 if print_filenames:
                     self.outstream.write("##### " + k.split('?.')[0] + '\n')
                 for line in v:
                     self.outstream.write(line)
             self.outstream.flush()
         if self.output_returns_error:
-            for k, v in ret.iteritems():
+            for k, v in ret.items():
                 if len(v) > 0:
                     self.exit_status = 1
         return ret
@@ -361,7 +361,7 @@ def hs_eval(*args, **kwargs):
     ret = {}
     for path in orig_pathnames:
         kwargs['pathnames'] = [ path ]
-        kwargs['outstream'] = StringIO.StringIO()
+        kwargs['outstream'] = six.StringIO()
         cmd = ShadCmd(hss.eval, kwargs)
         cmd.run()
         cmd.outstream.seek(0)
@@ -386,7 +386,7 @@ def hs_sum(*args, **kwargs):
     ret = {}
     for path in orig_pathnames:
         kwargs['pathnames'] = [ path ]
-        kwargs['outstream'] = StringIO.StringIO()
+        kwargs['outstream'] = six.StringIO()
         cmd = ShadCmd(hss.sum, kwargs)
         cmd.run()
         cmd.outstream.seek(0)
