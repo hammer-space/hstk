@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2019 Hammerspace
+# Copyright 2021 Hammerspace
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import sys
+import random
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -33,7 +34,7 @@ class HSExp(object):
         return ret
 
 _global_args = { 'json': False }
-_eval_args = { 'recursive': False, 'raw': False, 'compact': False }
+_eval_args = { 'recursive': False, 'nonfiles': False, 'raw': False, 'compact': False }
 _eval_args.update(_global_args)
 def _build_eval(**kwargs):
     tset = set()
@@ -47,13 +48,16 @@ def _build_eval(**kwargs):
         ret += '_compact'
     if 'raw' in tset:
         ret += '_raw'
-    if 'recursive' in tset:
-        ret += '_rec'
+    if 'nonfiles' in tset:
+        ret += '_rec_nofiles'
+    else:
+        if 'recursive' in tset:
+            ret += '_rec'
     if 'json' in tset:
         ret += '_json'
     return ret
 
-_sum_args = { 'raw': False, 'compact': False }
+_sum_args = { 'raw': False, 'compact': False, 'nonfiles': False }
 _sum_args.update(_global_args)
 def _build_sum(**kwargs):
     tset = set()
@@ -67,19 +71,24 @@ def _build_sum(**kwargs):
         ret += '_compact'
     if  'raw' in tset:
         ret += '_raw'
+    if 'nonfiles' in tset:
+        ret += '_nofiles'
     if 'json' in tset:
         ret += '_json'
     return ret
 
-_set_args = { 'recursive': False }
+_set_args = { 'recursive': False , 'nonfiles': False }
 def _build_set(**kwargs):
     tset = set()
     for tkey in _set_args.keys():
         if kwargs[tkey]:
             tset.add(tkey)
     ret = 'set'
-    if 'recursive' in tset:
-        ret += '_rec'
+    if 'nonfiles' in tset:
+        ret += '_rec_nofiles'
+    else:
+        if 'recursive' in tset:
+            ret += '_rec'
     return ret
 
 _inheritance_args = { 'local': False, 'inherited': False, 'object': False, 'active': False, 'effective': False, 'share': False }
@@ -156,6 +165,7 @@ def _do_update_kwargs(def_kwargs, kwargs):
 
 def _clean_str(value):
     """Allow the use of / in filenames by remapping the character to a unicode character Hammerscript treats as /"""
+    value += "/*" + hex(random.randint(0,99999999)) + "*/"
     return value.replace('/', unichr(0x2215).encode('UTF-8'))
 
 
@@ -164,9 +174,11 @@ def _gen_list_func(gen_mdtype=None):
     def_kwargs.update(_eval_args)
     def_kwargs.update(_inheritance_args)
     def_kwargs.update(_global_args)
-    def list_template(gen_mdtype=gen_mdtype, def_kwargs=def_kwargs, **kwargs):
+    def list_template(unbound=False, gen_mdtype=gen_mdtype, def_kwargs=def_kwargs, **kwargs):
         _do_update_kwargs(def_kwargs, kwargs)
         ret = "?." + _build_eval(**kwargs) + " list_" + gen_mdtype + 's' + _build_inheritance(**kwargs)
+        if unbound:
+            ret += '_unbound'
         return _clean_str(ret)
     return list_template
 
@@ -361,6 +373,22 @@ def sum(value=None, **kwargs):
         ret += " EVAL(EXPRESSION_FROM_JSON('" + str(value) + "'))"
     else:
         ret += " " + str(value) + ""
+    return _clean_str(ret)
+
+
+###
+### Simple Commands
+###
+
+def rm_rf(value=None, **kwargs):
+    return _clean_str("?.rm-rf")
+
+def cp_a(value=None, **kwargs):
+    ret = "?.cp-a %d" % (kwargs['dest_inode'])
+    return _clean_str(ret)
+
+def inode_info(value=None, **kwargs):
+    ret = "?.attribute=inode_info"
     return _clean_str(ret)
 
 if __name__ == '__main__':
