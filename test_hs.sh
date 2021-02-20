@@ -96,6 +96,49 @@ function test_attributes {
     hs attribute set --recursive selected -e '#empty' $TDIR/dir1
     hs attribute get selected $TDIR/dir1/file
 
+    # NONFILES ATTRIBUTE RELATED
+    hs attribute set --nonfiles selected -e TRUE $TDIR/dir1
+    hs attribute get selected $TDIR/dir1/file
+    hs attribute get --nonfiles selected $TDIR/dir1
+    hs attribute get --nonfiles --raw selected $TDIR/dir1
+    hs attribute get --nonfiles --compact selected $TDIR/dir1
+    hs attribute get --nonfiles --local selected $TDIR/dir1
+    hs attribute get --nonfiles --local --raw selected $TDIR/dir1
+    hs attribute get --nonfiles --local --compact selected $TDIR/dir1
+    hs attribute get --nonfiles --inherited selected $TDIR/dir1
+    hs attribute get --nonfiles --inherited --raw selected $TDIR/dir1
+    hs attribute get --nonfiles --inherited --compact selected $TDIR/dir1
+    hs attribute get --nonfiles --object selected $TDIR/dir1
+    hs attribute get --nonfiles --object --raw selected $TDIR/dir1
+    hs attribute get --nonfiles --object --compact selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --raw selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --compact selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --local selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --local --raw selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --local --compact selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --inherited selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --inherited --raw selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --inherited --compact selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --object selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --object --raw selected $TDIR/dir1
+    hs attribute get --nonfiles --unbound --object --compact selected $TDIR/dir1
+    hs attribute has --nonfiles --raw selected $TDIR/dir1
+    hs attribute has --nonfiles --compact selected $TDIR/dir1
+    hs attribute has --nonfiles --local selected $TDIR/dir1
+    hs attribute has --nonfiles --local --raw selected $TDIR/dir1
+    hs attribute has --nonfiles --local --compact selected $TDIR/dir1
+    hs attribute has --nonfiles --inherited selected $TDIR/dir1
+    hs attribute has --nonfiles --inherited --raw selected $TDIR/dir1
+    hs attribute has --nonfiles --inherited --compact selected $TDIR/dir1
+    hs attribute has --nonfiles --object selected $TDIR/dir1
+    hs attribute has --nonfiles --object --raw selected $TDIR/dir1
+    hs attribute has --nonfiles --object --compact selected $TDIR/dir1
+    hs attribute delete --nonfiles selected $TDIR/dir1
+    hs attribute delete --nonfiles --force selected $TDIR/dir1
+    hs attribute set --nonfiles selected -e '#empty' $TDIR/dir1
+    hs attribute get selected $TDIR/dir1/file
+
     # CONTINUOUSLY EVALUATED FORMULA ATTRIBUTES
     hs attribute set selected -e 'EXPRESSION(SIZE>5bytes)' $TDIR/file
     hs attribute get selected $TDIR/file
@@ -117,6 +160,17 @@ function test_attributes {
     hs eval -e 'list_attributes' $TDIR/file
     hs eval -e 'list_attributes_local' $TDIR/file
     hs eval -e 'list_attributes_inherited' $TDIR/file
+
+    # TEST WORM ATTRIBUTE
+    hs attribute set worm_expire_date -e '#empty' $TDIR/file
+    hs attribute get worm_expire_date $TDIR/file
+    hs attribute set worm_expire_date -e "now+1year" $TDIR/file
+    hs attribute get worm_expire_date  $TDIR/file
+    hs attribute set worm_expire_date -e "now+2years" $TDIR/file
+    hs attribute get worm_expire_date  $TDIR/file
+    hs attribute set worm_expire_date -e "now+1month" $TDIR/file
+    hs attribute get worm_expire_date  $TDIR/file
+
 }
 
 function test_attributes_json {
@@ -190,6 +244,49 @@ function test_attributes_json {
     hs --json attribute delete --recursive selected $TDIR/dir1
     hs --json attribute delete --recursive --force selected $TDIR/dir1
     hs --json attribute set --recursive selected -e '#empty' $TDIR/dir1
+    hs --json attribute get selected $TDIR/dir1/file
+
+    # NONFILES ATTRIBUTE RELATED
+    hs --json attribute set --nonfiles selected -e TRUE $TDIR/dir1
+    hs --json attribute get selected $TDIR/dir1/file
+    hs --json attribute get --nonfiles selected $TDIR/dir1
+    hs --json attribute get --nonfiles --raw selected $TDIR/dir1
+    hs --json attribute get --nonfiles --compact selected $TDIR/dir1
+    hs --json attribute get --nonfiles --local selected $TDIR/dir1
+    hs --json attribute get --nonfiles --local --raw selected $TDIR/dir1
+    hs --json attribute get --nonfiles --local --compact selected $TDIR/dir1
+    hs --json attribute get --nonfiles --inherited selected $TDIR/dir1
+    hs --json attribute get --nonfiles --inherited --raw selected $TDIR/dir1
+    hs --json attribute get --nonfiles --inherited --compact selected $TDIR/dir1
+    hs --json attribute get --nonfiles --object selected $TDIR/dir1
+    hs --json attribute get --nonfiles --object --raw selected $TDIR/dir1
+    hs --json attribute get --nonfiles --object --compact selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --raw selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --compact selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --local selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --local --raw selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --local --compact selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --inherited selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --inherited --raw selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --inherited --compact selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --object selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --object --raw selected $TDIR/dir1
+    hs --json attribute get --nonfiles --unbound --object --compact selected $TDIR/dir1
+    hs --json attribute has --nonfiles --raw selected $TDIR/dir1
+    hs --json attribute has --nonfiles --compact selected $TDIR/dir1
+    hs --json attribute has --nonfiles --local selected $TDIR/dir1
+    hs --json attribute has --nonfiles --local --raw selected $TDIR/dir1
+    hs --json attribute has --nonfiles --local --compact selected $TDIR/dir1
+    hs --json attribute has --nonfiles --inherited selected $TDIR/dir1
+    hs --json attribute has --nonfiles --inherited --raw selected $TDIR/dir1
+    hs --json attribute has --nonfiles --inherited --compact selected $TDIR/dir1
+    hs --json attribute has --nonfiles --object selected $TDIR/dir1
+    hs --json attribute has --nonfiles --object --raw selected $TDIR/dir1
+    hs --json attribute has --nonfiles --object --compact selected $TDIR/dir1
+    hs --json attribute delete --nonfiles selected $TDIR/dir1
+    hs --json attribute delete --nonfiles --force selected $TDIR/dir1
+    hs --json attribute set --nonfiles selected -e '#empty' $TDIR/dir1
     hs --json attribute get selected $TDIR/dir1/file
 
     # CONTINUOUSLY EVALUATED FORMULA ATTRIBUTES
@@ -289,6 +386,51 @@ function test_tags {
     hs tag delete --recursive --force mytag $TDIR/dir1
     hs tag get mytag $TDIR/dir1/file
 
+    # NONFILES TAG RELATED
+    hs tag add --nonfiles mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
+    hs tag set --nonfiles mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
+    hs tag get mytag $TDIR/dir1/file
+    hs tag get --nonfiles mytag $TDIR/dir1/file
+    hs tag get --nonfiles --raw mytag $TDIR/dir1/file
+    hs tag get --nonfiles --compact mytag $TDIR/dir1/file
+    hs tag get --nonfiles --local mytag $TDIR/dir1/file
+    hs tag get --nonfiles --local --raw mytag $TDIR/dir1/file
+    hs tag get --nonfiles --local --compact mytag $TDIR/dir1/file
+    hs tag get --nonfiles --inherited mytag $TDIR/dir1/file
+    hs tag get --nonfiles --inherited --raw mytag $TDIR/dir1/file
+    hs tag get --nonfiles --inherited --compact mytag $TDIR/dir1/file
+    hs tag get --nonfiles --object mytag $TDIR/dir1/file
+    hs tag get --nonfiles --object --raw mytag $TDIR/dir1/file
+    hs tag get --nonfiles --object --compact mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --raw mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --compact mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --local mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --local --raw mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --local --compact mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --inherited mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --inherited --raw mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --inherited --compact mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --object mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --object --raw mytag $TDIR/dir1/file
+    hs tag get --nonfiles --unbound --object --compact mytag $TDIR/dir1/file
+    hs tag has --nonfiles mytag $TDIR/dir1/file
+    hs tag has --nonfiles --raw mytag $TDIR/dir1/file
+    hs tag has --nonfiles --compact mytag $TDIR/dir1/file
+    hs tag has --nonfiles --local mytag $TDIR/dir1/file
+    hs tag has --nonfiles --local --raw mytag $TDIR/dir1/file
+    hs tag has --nonfiles --local --compact mytag $TDIR/dir1/file
+    hs tag has --nonfiles --inherited mytag $TDIR/dir1/file
+    hs tag has --nonfiles --inherited --raw mytag $TDIR/dir1/file
+    hs tag has --nonfiles --inherited --compact mytag $TDIR/dir1/file
+    hs tag has --nonfiles --object mytag $TDIR/dir1/file
+    hs tag has --nonfiles --object --raw mytag $TDIR/dir1/file
+    hs tag has --nonfiles --object --compact mytag $TDIR/dir1/file
+
+    hs tag delete --nonfiles mytag $TDIR/dir1
+    hs tag delete --nonfiles --force mytag $TDIR/dir1
+    hs tag get mytag $TDIR/dir1/file
+
     # CONTINUOUSLY EVALUATED FORMULA TAGS
     hs tag set mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
     hs tag get mytag $TDIR/dir1
@@ -303,7 +445,7 @@ function test_tags {
     hs tag delete --force mytag $TDIR/dir1
 
     # FROM WITHIN A SCRIPT
-    # XXX hs eval 'set_tag("mytag", "1gbyte")' $TDIR/file
+    #hs eval 'set_tag("mytag", "1gbyte")' $TDIR/file  # XXX this doesn't seem to take, should it?
     hs tag set mytag -e 1gbyte $TDIR/file
     # hs eval -e 'get_tag("mytag")==1gbyte' $TDIR/file
     # THIS ONE IS EXPECTED TO RETURN AN ERROR    hs eval -e 'get_tag("mytag")=="1gbyte"' $TDIR/file
@@ -398,6 +540,51 @@ function test_tags_json {
     hs --json tag delete --recursive --force mytag $TDIR/dir1
     hs --json tag get mytag $TDIR/dir1/file
 
+    # NONFILES TAG RELATED
+    hs --json tag add --nonfiles mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
+    hs --json tag set --nonfiles mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
+    hs --json tag get mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --raw mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --compact mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --local mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --local --raw mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --local --compact mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --inherited mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --inherited --raw mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --inherited --compact mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --object mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --object --raw mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --object --compact mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --raw mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --compact mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --local mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --local --raw mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --local --compact mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --inherited mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --inherited --raw mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --inherited --compact mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --object mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --object --raw mytag $TDIR/dir1/file
+    hs --json tag get --nonfiles --unbound --object --compact mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --raw mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --compact mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --local mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --local --raw mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --local --compact mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --inherited mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --inherited --raw mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --inherited --compact mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --object mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --object --raw mytag $TDIR/dir1/file
+    hs --json tag has --nonfiles --object --compact mytag $TDIR/dir1/file
+
+    hs --json tag delete --nonfiles mytag $TDIR/dir1
+    hs --json tag delete --nonfiles --force mytag $TDIR/dir1
+    hs --json tag get mytag $TDIR/dir1/file
+
     # CONTINUOUSLY EVALUATED FORMULA TAGS
     hs --json tag set mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
     hs --json tag get mytag $TDIR/dir1
@@ -412,7 +599,7 @@ function test_tags_json {
     hs --json tag delete --force mytag $TDIR/dir1
 
     # FROM WITHIN A SCRIPT
-    # XXX hs --json eval 'set_tag("mytag", "1gbyte")' $TDIR/file
+    #hs --json eval 'set_tag("mytag", "1gbyte")' $TDIR/file  # XXX this doesn't seem to take, should it?
     hs --json tag set mytag -e 1gbyte $TDIR/file
     # hs --json eval -e 'get_tag("mytag")==1gbyte' $TDIR/file
     # THIS ONE IS EXPECTED TO RETURN AN ERROR    hs --json eval -e 'get_tag("mytag")=="1gbyte"' $TDIR/file
@@ -507,6 +694,51 @@ function test_rekognition_tags {
     hs rekognition_tag delete --recursive --force mytag $TDIR/dir1
     hs rekognition_tag get mytag $TDIR/dir1/file
 
+    # NONFILES TAG RELATED
+    hs rekognition_tag add --nonfiles mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
+    hs rekognition_tag set --nonfiles mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
+    hs rekognition_tag get mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --raw mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --compact mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --local mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --local --raw mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --local --compact mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --inherited mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --inherited --raw mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --inherited --compact mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --object mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --object --raw mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --object --compact mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --raw mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --compact mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --local mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --local --raw mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --local --compact mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --inherited mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --inherited --raw mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --inherited --compact mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --object mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --object --raw mytag $TDIR/dir1/file
+    hs rekognition_tag get --nonfiles --unbound --object --compact mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --raw mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --compact mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --local mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --local --raw mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --local --compact mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --inherited mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --inherited --raw mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --inherited --compact mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --object mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --object --raw mytag $TDIR/dir1/file
+    hs rekognition_tag has --nonfiles --object --compact mytag $TDIR/dir1/file
+
+    hs rekognition_tag delete --nonfiles mytag $TDIR/dir1
+    hs rekognition_tag delete --nonfiles --force mytag $TDIR/dir1
+    hs rekognition_tag get mytag $TDIR/dir1/file
+
     # CONTINUOUSLY EVALUATED FORMULA TAGS
     hs rekognition_tag set mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
     hs rekognition_tag get mytag $TDIR/dir1
@@ -521,7 +753,7 @@ function test_rekognition_tags {
     hs rekognition_tag delete --force mytag $TDIR/dir1
 
     # FROM WITHIN A SCRIPT
-    # XXX hs eval 'set_rekognition_tag("mytag", "1gbyte")' $TDIR/file
+    #hs eval 'set_rekognition_tag("mytag", "1gbyte")' $TDIR/file  # XXX this doesn't seem to take, should it?
     hs rekognition_tag set mytag -e 1gbyte $TDIR/file
     # hs eval -e 'get_rekognition_tag("mytag")==1gbyte' $TDIR/file
     # THIS ONE IS EXPECTED TO RETURN AN ERROR    hs eval -e 'get_rekognition_tag("mytag")=="1gbyte"' $TDIR/file
@@ -617,6 +849,51 @@ function test_rekognition_tags_json {
     hs --json rekognition_tag delete --recursive --force mytag $TDIR/dir1
     hs --json rekognition_tag get mytag $TDIR/dir1/file
 
+    # NONFILES TAG RELATED
+    hs --json rekognition_tag add --nonfiles mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
+    hs --json rekognition_tag set --nonfiles mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
+    hs --json rekognition_tag get mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --local mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --local --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --local --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --inherited mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --inherited --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --inherited --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --object mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --object --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --object --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --local mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --local --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --local --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --inherited mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --inherited --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --inherited --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --object mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --object --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag get --nonfiles --unbound --object --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --local mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --local --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --local --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --inherited mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --inherited --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --inherited --compact mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --object mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --object --raw mytag $TDIR/dir1/file
+    hs --json rekognition_tag has --nonfiles --object --compact mytag $TDIR/dir1/file
+
+    hs --json rekognition_tag delete --nonfiles mytag $TDIR/dir1
+    hs --json rekognition_tag delete --nonfiles --force mytag $TDIR/dir1
+    hs --json rekognition_tag get mytag $TDIR/dir1/file
+
     # CONTINUOUSLY EVALUATED FORMULA TAGS
     hs --json rekognition_tag set mytag -e 'EXPRESSION(NOW)' $TDIR/dir1
     hs --json rekognition_tag get mytag $TDIR/dir1
@@ -631,7 +908,7 @@ function test_rekognition_tags_json {
     hs --json rekognition_tag delete --force mytag $TDIR/dir1
 
     # FROM WITHIN A SCRIPT
-    # XXX hs --json eval 'set_rekognition_tag("mytag", "1gbyte")' $TDIR/file
+    #hs --json eval 'set_rekognition_tag("mytag", "1gbyte")' $TDIR/file  # XXX this doesn't seem to take, should it?
     hs --json rekognition_tag set mytag -e 1gbyte $TDIR/file
     # hs --json eval -e 'get_rekognition_tag("mytag")==1gbyte' $TDIR/file
     # THIS ONE IS EXPECTED TO RETURN AN ERROR    hs --json eval -e 'get_rekognition_tag("mytag")=="1gbyte"' $TDIR/file
@@ -692,6 +969,28 @@ function test_keywords {
     hs keyword has --raw mykeyword $TDIR/dir1/file # XXX Exists?
     hs keyword has --compact mykeyword $TDIR/dir1/file # XXX Exists?
 
+    # NONFILES KEYWORD RELATED
+    hs keyword has mykeyword $TDIR/dir1/file
+    hs keyword add --nonfiles mykeyword $TDIR/dir1
+    hs keyword has mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --raw mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --compact mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --local mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --local --raw mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --local --compact mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --inherited mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --inherited --raw mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --inherited --compact mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --object mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --object --raw mykeyword $TDIR/dir1/file
+    hs keyword has --nonfiles --object --compact mykeyword $TDIR/dir1/file
+    hs keyword delete --nonfiles mykeyword $TDIR/dir1
+    hs keyword delete --nonfiles --force mykeyword $TDIR/dir1
+    hs keyword has mykeyword $TDIR/dir1/file
+    hs keyword has --raw mykeyword $TDIR/dir1/file # XXX Exists?
+    hs keyword has --compact mykeyword $TDIR/dir1/file # XXX Exists?
+
     # KEYWORD FROM WITHIN A SCRIPT
     hs keyword add mykeyword $TDIR/file
     hs eval -e 'has_keyword("mykeyword")' $TDIR/file
@@ -739,6 +1038,28 @@ function test_keywords_json {
     hs --json keyword has --recursive --object --compact mykeyword $TDIR/dir1/file
     hs --json keyword delete --recursive mykeyword $TDIR/dir1
     hs --json keyword delete --recursive --force mykeyword $TDIR/dir1
+    hs --json keyword has mykeyword $TDIR/dir1/file
+    hs --json keyword has --raw mykeyword $TDIR/dir1/file # XXX Exists?
+    hs --json keyword has --compact mykeyword $TDIR/dir1/file # XXX Exists?
+
+    # NONFILES KEYWORD RELATED
+    hs --json keyword has mykeyword $TDIR/dir1/file
+    hs --json keyword add --nonfiles mykeyword $TDIR/dir1
+    hs --json keyword has mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --raw mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --compact mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --local mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --local --raw mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --local --compact mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --inherited mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --inherited --raw mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --inherited --compact mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --object mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --object --raw mykeyword $TDIR/dir1/file
+    hs --json keyword has --nonfiles --object --compact mykeyword $TDIR/dir1/file
+    hs --json keyword delete --nonfiles mykeyword $TDIR/dir1
+    hs --json keyword delete --nonfiles --force mykeyword $TDIR/dir1
     hs --json keyword has mykeyword $TDIR/dir1/file
     hs --json keyword has --raw mykeyword $TDIR/dir1/file # XXX Exists?
     hs --json keyword has --compact mykeyword $TDIR/dir1/file # XXX Exists?
@@ -794,12 +1115,32 @@ function test_labels {
     hs label has --raw cat $TDIR/dir1/file
     hs label has --compact cat $TDIR/dir1/file
 
+    # NONFILES LABEL RELATED
+    hs label add --nonfiles cat $TDIR/dir1
+    hs label has cat $TDIR/dir1/file
+    hs label has --nonfiles cat $TDIR/dir1/file
+    hs label has --nonfiles --raw cat $TDIR/dir1/file
+    hs label has --nonfiles --compact cat $TDIR/dir1/file
+    hs label has --nonfiles --local cat $TDIR/dir1/file
+    hs label has --nonfiles --local --raw cat $TDIR/dir1/file
+    hs label has --nonfiles --local --compact cat $TDIR/dir1/file
+    hs label has --nonfiles --inherited cat $TDIR/dir1/file
+    hs label has --nonfiles --inherited --raw cat $TDIR/dir1/file
+    hs label has --nonfiles --inherited --compact cat $TDIR/dir1/file
+    hs label has --nonfiles --object cat $TDIR/dir1/file
+    hs label has --nonfiles --object --raw cat $TDIR/dir1/file
+    hs label has --nonfiles --object --compact cat $TDIR/dir1/file
+    hs label delete --nonfiles cat $TDIR/dir1
+    hs label delete --nonfiles --force cat $TDIR/dir1
+    hs label has --raw cat $TDIR/dir1/file
+    hs label has --compact cat $TDIR/dir1/file
+
     # LABEL FROM WITHIN A SCRIPT
     hs eval -e 'has_label("cat")' $TDIR/file
     hs eval -e 'has_label_local("cat")' $TDIR/file
     hs eval -e 'has_label_inherited("cat")' $TDIR/file
     hs label add cat $TDIR/file
-    hs eval -e 'has_label("cat")' $TDIR/file  # XXX next few need more verification
+    hs eval -e 'has_label("cat")' $TDIR/file  # XXX these next few dont seem to be working, return FALSE
     hs eval -e 'has_label("living thing")' $TDIR/file
     hs eval -e 'list_labels' $TDIR/file
     hs eval -e 'list_labels_local' $TDIR/file
@@ -847,12 +1188,32 @@ function test_labels_json {
     hs --json label has --raw cat $TDIR/dir1/file
     hs --json label has --compact cat $TDIR/dir1/file
 
+    # NONFILES LABEL RELATED
+    hs --json label add --nonfiles cat $TDIR/dir1
+    hs --json label has cat $TDIR/dir1/file
+    hs --json label has --nonfiles cat $TDIR/dir1/file
+    hs --json label has --nonfiles --raw cat $TDIR/dir1/file
+    hs --json label has --nonfiles --compact cat $TDIR/dir1/file
+    hs --json label has --nonfiles --local cat $TDIR/dir1/file
+    hs --json label has --nonfiles --local --raw cat $TDIR/dir1/file
+    hs --json label has --nonfiles --local --compact cat $TDIR/dir1/file
+    hs --json label has --nonfiles --inherited cat $TDIR/dir1/file
+    hs --json label has --nonfiles --inherited --raw cat $TDIR/dir1/file
+    hs --json label has --nonfiles --inherited --compact cat $TDIR/dir1/file
+    hs --json label has --nonfiles --object cat $TDIR/dir1/file
+    hs --json label has --nonfiles --object --raw cat $TDIR/dir1/file
+    hs --json label has --nonfiles --object --compact cat $TDIR/dir1/file
+    hs --json label delete --nonfiles cat $TDIR/dir1
+    hs --json label delete --nonfiles --force cat $TDIR/dir1
+    hs --json label has --raw cat $TDIR/dir1/file
+    hs --json label has --compact cat $TDIR/dir1/file
+
     # LABEL FROM WITHIN A SCRIPT
     hs --json eval -e 'has_label("cat")' $TDIR/file
     hs --json eval -e 'has_label_local("cat")' $TDIR/file
     hs --json eval -e 'has_label_inherited("cat")' $TDIR/file
     hs --json label add cat $TDIR/file
-    hs --json eval -e 'has_label("cat")' $TDIR/file  # XXX next few need more verification
+    hs --json eval -e 'has_label("cat")' $TDIR/file  # XXX these next few dont seem to be working, return FALSE
     hs --json eval -e 'has_label("living thing")' $TDIR/file
     hs --json eval -e 'list_labels' $TDIR/file
     hs --json eval -e 'list_labels_local' $TDIR/file
@@ -883,15 +1244,16 @@ function test_objectives {
     hs objective delete --force do-not-move -e true $TDIR/file
     # This next line is expected to fail
 #    hs objective delete do-not-move $TDIR/file
-    hs objective add "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/file
-    hs objective has "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/file
-    hs objective add "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
-    hs objective has "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
-    hs objective add "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/file
-    hs objective delete "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
-    hs objective delete --force "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
-    hs objective has "Place-on-Node11.rw.net"  $TDIR/file
+    hs objective add "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/file
+    hs objective has "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/file
+    hs objective add "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
+    hs objective has "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
+    hs objective add "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/file
+    hs objective delete "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
+    hs objective delete --force "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
+    hs objective has "Place-on-dsx11.df.hammer.space"  $TDIR/file
     hs objective has do-not-move $TDIR/file
+
     # RECURSIVE OBJECTIVE RELATED
     hs objective add --recursive "do-not-move" -e true $TDIR/
     hs objective has --recursive "do-not-move" -e true $TDIR/
@@ -916,10 +1278,39 @@ function test_objectives {
     hs objective delete --recursive --force "do-not-move" -e true $TDIR/
     hs objective add --recursive "do-not-move" $TDIR/ # implied -e true
     hs objective delete --recursive "do-not-move" $TDIR/
-    hs objective add --recursive "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/
-    hs objective add --recursive "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
-    hs objective delete --recursive "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/
-    hs objective delete --recursive "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
+    hs objective add --recursive "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/
+    hs objective add --recursive "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
+    hs objective delete --recursive "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/
+    hs objective delete --recursive "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
+
+    # NONFILES OBJECTIVE RELATED
+    hs objective add --nonfiles "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --raw "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --compact "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --local "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --local --raw "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --local --compact "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --inherited "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --inherited --raw "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --inherited --compact "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --effective "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --effective --raw "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --effective --compact "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --active "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --active --raw "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --active --compact "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --share "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --share --raw "do-not-move" -e true $TDIR/
+    hs objective has --nonfiles --share --compact "do-not-move" -e true $TDIR/
+    hs objective delete --nonfiles "do-not-move" -e true $TDIR/
+    hs objective delete --nonfiles --force "do-not-move" -e true $TDIR/
+    hs objective add --nonfiles "do-not-move" $TDIR/ # implied -e true
+    hs objective delete --nonfiles "do-not-move" $TDIR/
+    hs objective add --nonfiles "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/
+    hs objective add --nonfiles "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
+    hs objective delete --nonfiles "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/
+    hs objective delete --nonfiles "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
 }
 
 function test_objectives_json {
@@ -944,14 +1335,14 @@ function test_objectives_json {
     hs --json objective delete --force do-not-move -e true $TDIR/file
     # This next line is expected to fail
 #    hs --json objective delete do-not-move $TDIR/file
-    hs --json objective add "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/file
-    hs --json objective has "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/file
-    hs --json objective add "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
-    hs --json objective has "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
-    hs --json objective add "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/file
-    hs --json objective delete "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
-    hs --json objective delete --force "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
-    hs --json objective has "Place-on-Node11.rw.net"  $TDIR/file
+    hs --json objective add "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/file
+    hs --json objective has "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/file
+    hs --json objective add "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
+    hs --json objective has "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
+    hs --json objective add "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/file
+    hs --json objective delete "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
+    hs --json objective delete --force "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/file
+    hs --json objective has "Place-on-dsx11.df.hammer.space"  $TDIR/file
     hs --json objective has do-not-move $TDIR/file
     # RECURSIVE OBJECTIVE RELATED
     hs --json objective add --recursive "do-not-move" -e true $TDIR/
@@ -977,10 +1368,38 @@ function test_objectives_json {
     hs --json objective delete --recursive --force "do-not-move" -e true $TDIR/
     hs --json objective add --recursive "do-not-move" $TDIR/ # implied -e true
     hs --json objective delete --recursive "do-not-move" $TDIR/
-    hs --json objective add --recursive "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/
-    hs --json objective add --recursive "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
-    hs --json objective delete --recursive "Place-on-Node11.rw.net" -e "EXPRESSION(IS_LIVE)" $TDIR/
-    hs --json objective delete --recursive "Place-on-Node11.rw.net" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
+    hs --json objective add --recursive "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/
+    hs --json objective add --recursive "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
+    hs --json objective delete --recursive "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/
+    hs --json objective delete --recursive "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
+    # NONFILES OBJECTIVE RELATED
+    hs --json objective add --nonfiles "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --raw "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --compact "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --local "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --local --raw "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --local --compact "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --inherited "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --inherited --raw "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --inherited --compact "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --effective "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --effective --raw "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --effective --compact "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --active "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --active --raw "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --active --compact "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --share "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --share --raw "do-not-move" -e true $TDIR/
+    hs --json objective has --nonfiles --share --compact "do-not-move" -e true $TDIR/
+    hs --json objective delete --nonfiles "do-not-move" -e true $TDIR/
+    hs --json objective delete --nonfiles --force "do-not-move" -e true $TDIR/
+    hs --json objective add --nonfiles "do-not-move" $TDIR/ # implied -e true
+    hs --json objective delete --nonfiles "do-not-move" $TDIR/
+    hs --json objective add --nonfiles "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/
+    hs --json objective add --nonfiles "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
+    hs --json objective delete --nonfiles "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(IS_LIVE)" $TDIR/
+    hs --json objective delete --nonfiles "Place-on-dsx11.df.hammer.space" -e "EXPRESSION(SPACE_USED>10KBYTES)" $TDIR/
 }
 
 function test_collections {
@@ -1034,7 +1453,7 @@ function test_sums {
     hs sum --raw -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR
     hs sum --compact -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR
     # How many files, how much space and the top 10 largest files on each volume
-    hs sum -e "SUMS_TABLE{|::NAME=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED}}[ROWS(INSTANCES)]" $TDIR
+    hs sum -e "SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED}}[ROWS(INSTANCES)]" $TDIR
 
     # How many files, how much space and the top 10 largest files at each level of alignment
     hs sum -e "IS_FILE?SUMS_TABLE{IFERROR(OVERALL_ALIGNMENT,#EMPTY),{1FILE,SPACE_USED,TOP10_TABLE{{SPACE_USED,PATH}}}}" $TDIR
@@ -1048,8 +1467,36 @@ function test_sums {
     hs sum -e "BOTTOM10_TABLE{{space_used,path}}" $TDIR
     hs sum -e "BOTTOM100_TABLE{{space_used,path}}" $TDIR
     hs sum -e "BOTTOM1000_TABLE{{space_used,path}}" $TDIR
+}
 
-    hs sum --symlink $TDIR/volume_sums -e "SUMS_TABLE{|::NAME=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED,TOP10_TABLE{{space_used,path}}}}[ROWS(INSTANCES)]" $TDIR
+function test_sums_nonfiles {
+    hs sum --symlink $TDIR/volume_sums -e "SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED,TOP10_TABLE{{space_used,path}}}}[ROWS(INSTANCES)]" $TDIR --nonfiles
+    cat $TDIR/volume_sums
+    rm $TDIR/volume_sums
+
+
+    # SUMS RELATED
+    # Total number of INODES of each type
+    hs sum -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR --nonfiles
+    hs sum --raw -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR --nonfiles
+    hs sum --compact -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR --nonfiles
+    # How many files, how much space and the top 10 largest files on each volume
+    hs sum -e "SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED}}[ROWS(INSTANCES)]" $TDIR --nonfiles
+
+    # How many files, how much space and the top 10 largest files at each level of alignment
+    hs sum -e "IS_FILE?SUMS_TABLE{IFERROR(OVERALL_ALIGNMENT,#EMPTY),{1FILE,SPACE_USED,TOP10_TABLE{{SPACE_USED,PATH}}}}" $TDIR --nonfiles
+    # How many files, how much space and the top 10 largest files on each owner
+    hs sum -e "IS_FILE?SUMS_TABLE{IFERROR(OWNER,#EMPTY),{1FILE,SPACE_USED,TOP10_TABLE{{space_used,path}}}}" $TDIR --nonfiles
+
+    # TOP AND BOTTOM 10,100, and 1000
+    hs sum -e "TOP10_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs sum -e "TOP100_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs sum -e "TOP1000_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs sum -e "BOTTOM10_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs sum -e "BOTTOM100_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs sum -e "BOTTOM1000_TABLE{{space_used,path}}" $TDIR --nonfiles
+
+    hs sum --symlink $TDIR/volume_sums -e "SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED,TOP10_TABLE{{space_used,path}}}}[ROWS(INSTANCES)]" $TDIR --nonfiles
     cat $TDIR/volume_sums
     rm $TDIR/volume_sums
 }
@@ -1061,7 +1508,7 @@ function test_sums_json {
     hs --json sum --raw -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR
     hs --json sum --compact -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR
     # How many files, how much space and the top 10 largest files on each volume
-    hs --json sum -e "SUMS_TABLE{|::NAME=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED}}[ROWS(INSTANCES)]" $TDIR
+    hs --json sum -e "SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED}}[ROWS(INSTANCES)]" $TDIR
 
     # How many files, how much space and the top 10 largest files at each level of alignment
     hs --json sum -e "IS_FILE?SUMS_TABLE{IFERROR(OVERALL_ALIGNMENT,#EMPTY),{1FILE,SPACE_USED,TOP10_TABLE{{SPACE_USED,PATH}}}}" $TDIR
@@ -1076,9 +1523,40 @@ function test_sums_json {
     hs --json sum -e "BOTTOM100_TABLE{{space_used,path}}" $TDIR
     hs --json sum -e "BOTTOM1000_TABLE{{space_used,path}}" $TDIR
 
-    hs --json sum --symlink $TDIR/volume_sums -e "SUMS_TABLE{|::NAME=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED,TOP10_TABLE{{space_used,path}}}}[ROWS(INSTANCES)]" $TDIR
+    hs --json sum --symlink $TDIR/volume_sums -e "SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED,TOP10_TABLE{{space_used,path}}}}[ROWS(INSTANCES)]" $TDIR
     cat $TDIR/volume_sums
     rm $TDIR/volume_sums
+}
+
+function test_sums_json_nonfiles {
+    # SUMS RELATED
+    # Total number of INODES of each type
+    hs --json sum -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR --nonfiles
+    hs --json sum --raw -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR --nonfiles
+    hs --json sum --compact -e "SUMS_TABLE{TYPE,{1FILE,space_used,size}}" $TDIR --nonfiles
+    # How many files, how much space and the top 10 largest files on each volume
+    hs --json sum -e "SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED}}[ROWS(INSTANCES)]" $TDIR --nonfiles
+
+    # How many files, how much space and the top 10 largest files at each level of alignment
+    hs --json sum -e "IS_FILE?SUMS_TABLE{IFERROR(OVERALL_ALIGNMENT,#EMPTY),{1FILE,SPACE_USED,TOP10_TABLE{{SPACE_USED,PATH}}}}" $TDIR --nonfiles
+    # How many files, how much space and the top 10 largest files on each owner
+    hs --json sum -e "IS_FILE?SUMS_TABLE{IFERROR(OWNER,#EMPTY),{1FILE,SPACE_USED,TOP10_TABLE{{space_used,path}}}}" $TDIR --nonfiles
+
+    # TOP AND BOTTOM 10,100, and 1000
+    hs --json sum -e "TOP10_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs --json sum -e "TOP100_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs --json sum -e "TOP1000_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs --json sum -e "BOTTOM10_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs --json sum -e "BOTTOM100_TABLE{{space_used,path}}" $TDIR --nonfiles
+    hs --json sum -e "BOTTOM1000_TABLE{{space_used,path}}" $TDIR --nonfiles
+
+    hs --json sum --symlink $TDIR/volume_sums -e "SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1,INSTANCES[ROW].SPACE_USED,TOP10_TABLE{{space_used,path}}}}[ROWS(INSTANCES)]" $TDIR --nonfiles
+    cat $TDIR/volume_sums
+    rm $TDIR/volume_sums
+}
+
+function test_rm {
+    hs rm -rf $TDIR
 }
 
 test_attributes_json
@@ -1089,6 +1567,7 @@ test_labels_json
 test_objectives_json
 test_collections_json
 test_sums_json
+test_sums_json_nonfiles
 
 
 test_attributes
@@ -1099,6 +1578,8 @@ test_labels
 test_objectives
 test_collections
 test_sums
+test_sums_nonfiles
+test_rm
 
 
 
