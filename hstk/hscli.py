@@ -1206,7 +1206,7 @@ def do_collection_sum(ctx, sharepaths, collection, collation, *args, **kwargs):
             }
     else:
         eval_args = {
-                'exp': 'collection_sums("%s")[SUMMATION("%s")],#B' % (collection, collation),
+                'exp': 'collection_sums("%s")[SUMMATION("%s")]' % (collection, collation),
             }
     kwargs.update(eval_args)
     ctx.invoke(do_eval, **kwargs)
@@ -1370,6 +1370,23 @@ def do_file_virus_scan(ctx, paths, top_files, *args, **kwargs):
     else:
         sum_args = {
             'exp': 'IS_FILE?SUMS_TABLE{|KEY=ATTRIBUTES.VIRUS_SCAN,|VALUE=1}',
+        }
+    kwargs.update(sum_args)
+    ctx.invoke(do_sum, **kwargs)
+
+@usage.command(name='owner', help="Owner state of files each file(s) of files in dir(s)")
+@param_paths
+@click.option('--top-files', is_flag=True, help="include largest files of each owner")
+@click.pass_context
+def do_file_virus_scan(ctx, paths, top_files, *args, **kwargs):
+    kwargs['pathnames'] = paths
+    if top_files:
+        sum_args = {
+                'exp': 'IS_FILE?SUMS_TABLE{|KEY=OWNER,|VALUE={1FILE,SPACE_USED,TOP10_TABLE{{space_used,dpath}}}}',
+            }
+    else:
+        sum_args = {
+            'exp': 'IS_FILE?SUMS_TABLE{|KEY=OWNER,|VALUE=1}',
         }
     kwargs.update(sum_args)
     ctx.invoke(do_sum, **kwargs)

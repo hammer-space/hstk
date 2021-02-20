@@ -2,8 +2,8 @@ Hammerspace CLI tool and python toolkit (hstk)
 
 Supports Hammerspace release 4.6.0 and later.
 
-Building an RPM
-===============
+Install
+=======
 
 Installing with pip
 -------------------
