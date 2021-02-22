@@ -16,9 +16,9 @@ import subprocess as sp
 import functools
 import sys
 import os
-import cStringIO as StringIO
 import json
 import pprint
+import six
 import click
 import hstk.hsscript as hss
 
@@ -230,14 +230,14 @@ class ShadCmd(object):
             if len(ret.keys()) > 1:
                 print_filenames = True
 
-            for k, v in ret.iteritems():
+            for k, v in ret.items():
                 if print_filenames:
                     self.outstream.write("##### " + k.split('?.')[0] + '\n')
                 for line in v:
                     self.outstream.write(line)
             self.outstream.flush()
         if self.output_returns_error:
-            for k, v in ret.iteritems():
+            for k, v in ret.items():
                 if len(v) > 0:
                     self.exit_status = 1
         return ret
@@ -361,7 +361,7 @@ def hs_eval(*args, **kwargs):
     ret = {}
     for path in orig_pathnames:
         kwargs['pathnames'] = [ path ]
-        kwargs['outstream'] = StringIO.StringIO()
+        kwargs['outstream'] = six.StringIO()
         cmd = ShadCmd(hss.eval, kwargs)
         cmd.run()
         cmd.outstream.seek(0)
@@ -386,7 +386,7 @@ def hs_sum(*args, **kwargs):
     ret = {}
     for path in orig_pathnames:
         kwargs['pathnames'] = [ path ]
-        kwargs['outstream'] = StringIO.StringIO()
+        kwargs['outstream'] = six.StringIO()
         cmd = ShadCmd(hss.sum, kwargs)
         cmd.run()
         cmd.outstream.seek(0)
@@ -1519,7 +1519,7 @@ def _dot_stats_files(ctx, paths):
 
     for path in paths:
         # eval -e path to find the root of the share, create .stats there?
-        statsf = os.path.join(sharepath, '.stats')
+        statsf = os.path.join(paths, '.stats')
 
         if ctx.obj.dry_run:
             vnprint('dry run, not creating .stats file ' + statsf)
@@ -1543,7 +1543,7 @@ def do_report_stats_clear(ctx, sharepaths, *args, **kwargs):
             'exp': 'fs_stats.op_stats',
         }
     kwargs.update(tag_args)
-    ctx.invoke(do_tag_add, **kwargs)
+    ctx.invoke(do_tag_set, **kwargs)
 
 @perf_grp.command(name='top_calls', help="Show filesystem calls consuming the most time on share(s)")
 @param_sharepaths
@@ -1563,7 +1563,7 @@ def do_report_stats_top_calls(ctx, sharepaths, *args, **kwargs):
 @param_sharepath
 @click.option('--op', nargs=1, default='all', help="Restrict to reporting to funcs in a specific op")
 @click.pass_context
-def do_report_stats_funcs(ctx, sharepaths, *args, **kwargs):
+def do_report_stats_funcs(ctx, sharepaths, op, *args, **kwargs):
     if not sharepaths:
         sharepaths = [ '.' ]
     kwargs['pathnames'] = sharepaths
