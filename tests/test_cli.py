@@ -12,3 +12,7 @@ def test_simple_eval():
     res = runner.invoke(hscli.cli, '-nv eval -e THIS .'.split())
     assert res.exit_code == 0
 
+def test_simple_keyword():
+    runner = CliRunner()
+    res = runner.invoke(hscli.cli, '-nv keyword add --recursive MOUSE .'.split())
+    assert res.exit_code == 0
