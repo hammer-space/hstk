@@ -8,22 +8,25 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-if path.isfile('VERSION'):
+# Internal build
+release_file = None
+tmp_release_file = 'RELEASE'
+for i in range(10):
+   if path.exists(tmp_release_file):
+        release_file = tmp_release_file
+        pkg_name = 'hs'
+        break
+   tmp_release_file = '../' + tmp_release_file
+# External build
+if release_file is None and path.isfile('VERSION'):
     release_file = 'VERSION'
     pkg_name = 'hstk'
-else:
-    release_file = 'RELEASE'
-    pkg_name = 'hs'
-    for i in range(10):
-        if path.exists(release_file):
-            break
-        release_file = '../' + release_file
 
 with open(path.join(here, release_file)) as f:
     version=f.readline()
     version = version.strip()
 
-requirements = open('requirements.txt').readlines()
+requirements = open(path.join(here, 'requirements.txt')).readlines()
 
 setup(
     name=pkg_name,
