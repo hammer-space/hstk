@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright 2021 Hammerspace
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,11 +21,15 @@ six.moves.reload_module(sys)
 if (sys.version_info < (3, 0)):
     sys.setdefaultencoding('utf8')
 
-HAMMER = u'\U0001f528'
+# Unicode special characters
+uHAMMER = u'🔨' # u'\U0001f528'
+uSTAR = u'∗' # u'\U00002217'
+uSLASH = u'∕'  # u'\U00002215'
+
 if os.name == 'nt':
-    SHADESC = HAMMER + '.'
+    SHADESC = uHAMMER + '.'
 elif sys.platform == 'darwin':
-    SHADESC = HAMMER + '.'
+    SHADESC = uHAMMER + '.'
 else:
     SHADESC = '?.'
 
@@ -185,12 +190,8 @@ def _clean_str(value):
        character to a unicode character Hammerscript treats as *
     """
     ret = value + "/*" + hex(random.randint(0,99999999)) + "*/"
-    if (sys.version_info < (3, 0)):
-        ret = ret.replace('/', six.unichr(0x2215).encode('UTF-8'))
-        ret = ret.replace('*', six.unichr(0x2217).encode('UTF-8'))
-    else:
-        ret = ret.replace('/', six.unichr(0x2215))
-        ret = ret.replace('*', six.unichr(0x2217))
+    ret = ret.replace('/', uSLASH)
+    ret = ret.replace('*', uSTAR)
     return ret
 
 
