@@ -184,13 +184,13 @@ def _clean_str(value):
     3) Allow the use of * shadow filenames under windows by remapping the
        character to a unicode character Hammerscript treats as *
     """
-    value += "/*" + hex(random.randint(0,99999999)) + "*/"
+    ret = value + "/*" + hex(random.randint(0,99999999)) + "*/"
     if (sys.version_info < (3, 0)):
-        ret = value.replace('/', six.unichr(0x2215).encode('UTF-8'))
-        ret = value.replace('*', six.unichr(0x2217).encode('UTF-8'))
+        ret = ret.replace('/', six.unichr(0x2215).encode('UTF-8'))
+        ret = ret.replace('*', six.unichr(0x2217).encode('UTF-8'))
     else:
-        ret = value.replace('/', six.unichr(0x2215))
-        ret = value.replace('*', six.unichr(0x2217))
+        ret = ret.replace('/', six.unichr(0x2215))
+        ret = ret.replace('*', six.unichr(0x2217))
     return ret
 
 
