@@ -12,12 +12,22 @@
 # limitations under the License.
 
 import sys
+import os
 import random
 import six
 
 six.moves.reload_module(sys)
 if (sys.version_info < (3, 0)):
     sys.setdefaultencoding('utf8')
+
+HAMMER = u'\U0001f528'
+if os.name == 'nt':
+    SHADESC = HAMMER + '.'
+elif sys.platform == 'darwin':
+    SHADESC = HAMMER + '.'
+else:
+    SHADESC = '?.'
+
 
 class HSExp(object):
     def __init__(self, exp=None, string=False, input_json=False, unbound=False):
@@ -171,12 +181,16 @@ def _clean_str(value):
     1) Append a random suffix to avoid caching returning stale data
     2) Allow the use of / in filenames by remapping the character to a unicode
        character Hammerscript treats as /
+    3) Allow the use of * shadow filenames under windows by remapping the
+       character to a unicode character Hammerscript treats as *
     """
     value += "/*" + hex(random.randint(0,99999999)) + "*/"
     if (sys.version_info < (3, 0)):
         ret = value.replace('/', six.unichr(0x2215).encode('UTF-8'))
+        ret = value.replace('*', six.unichr(0x2217).encode('UTF-8'))
     else:
         ret = value.replace('/', six.unichr(0x2215))
+        ret = value.replace('*', six.unichr(0x2217))
     return ret
 
 
@@ -187,7 +201,7 @@ def _gen_list_func(gen_mdtype=None):
     def_kwargs.update(_global_args)
     def list_template(unbound=False, gen_mdtype=gen_mdtype, def_kwargs=def_kwargs, **kwargs):
         _do_update_kwargs(def_kwargs, kwargs)
-        ret = "?." + _build_eval(**kwargs) + " list_" + gen_mdtype + 's' + _build_inheritance(**kwargs)
+        ret = SHADESC + _build_eval(**kwargs) + " list_" + gen_mdtype + 's' + _build_inheritance(**kwargs)
         if unbound:
             ret += '_unbound'
         return _clean_str(ret)
@@ -219,7 +233,7 @@ def _gen_read_func(gen_mdtype=None, gen_read_type=None):
         # XXX DFQ objective values should always be unbound, on setting? getting? both?
 
         _do_update_kwargs(def_kwargs, kwargs)
-        ret = "?." + _build_eval(**kwargs) + " " + gen_read_type + "_" + gen_mdtype + _build_inheritance(**kwargs)
+        ret = SHADESC + _build_eval(**kwargs) + " " + gen_read_type + "_" + gen_mdtype + _build_inheritance(**kwargs)
         if gen_read_type == 'get' and unbound:
             ret += '_unbound'
         ret += '('
@@ -255,7 +269,7 @@ def _gen_update_func(gen_mdtype=None, gen_update_type=None, gen_table=None):
         # XXX DFQ objective values should always be unbound, on setting? getting? both?
         # XXX DFA Both
 
-        ret = "?." + _build_set(**kwargs)
+        ret = SHADESC + _build_set(**kwargs)
 
         if gen_mdtype == 'attribute':
             # annoying special case
@@ -298,7 +312,7 @@ def _gen_del_func(gen_mdtype=None, gen_table=None):
 
         # XXX DFQ objective values should always be unbound, on setting? getting? both?
         # XXX DFA - on both
-        ret = "?." + _build_set(**kwargs) + ' '
+        ret = SHADESC + _build_set(**kwargs) + ' '
 
         if gen_mdtype == 'attribute':
             # annoying special case
@@ -364,7 +378,7 @@ def eval(value=None, **kwargs):
 
     if not isinstance(value, HSExp):
         raise RuntimeError('value must be of type HSExp, passed in type ' + str(type(value)))
-    ret = "?." + _build_eval(**kwargs)
+    ret = SHADESC + _build_eval(**kwargs)
     if value.input_json is True:
         ret += " EVAL(EXPRESSION_FROM_JSON('" + str(value) + "'))"
     else:
@@ -379,7 +393,7 @@ def sum(value=None, **kwargs):
 
     if not isinstance(value, HSExp):
         raise RuntimeError('value must be of type HSExp, passed in type ' + str(type(value)))
-    ret = "?." + _build_sum(**kwargs);
+    ret = SHADESC + _build_sum(**kwargs);
     if value.input_json is True:
         ret += " EVAL(EXPRESSION_FROM_JSON('" + str(value) + "'))"
     else:
@@ -392,14 +406,14 @@ def sum(value=None, **kwargs):
 ###
 
 def rm_rf(value=None, **kwargs):
-    return _clean_str("?.rm-rf")
+    return _clean_str(SHADESC + "rm-rf")
 
 def cp_a(value=None, **kwargs):
-    ret = "?.cp-a %d" % (kwargs['dest_inode'])
+    ret = SHADESC + "cp-a %d" % (kwargs['dest_inode'])
     return _clean_str(ret)
 
 def inode_info(value=None, **kwargs):
-    ret = "?.attribute=inode_info"
+    ret = SHADESC + "attribute=inode_info"
     return _clean_str(ret)
 
 if __name__ == '__main__':
