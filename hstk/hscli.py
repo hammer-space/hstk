@@ -19,6 +19,9 @@ import sys
 import os
 import json
 import pprint
+import time
+import errno
+import io
 import six
 import click
 import hstk.hsscript as hss
@@ -26,9 +29,12 @@ import hstk.hsscript as hss
 
 # Helper object for containing global settings to be passed with context
 class HSGlobals(object):
-    def __init__(self, verbose=False, dry_run=False, output_json=False):
+    def __init__(self, verbose=False, dry_run=False, debug=False, output_json=False):
         self.verbose = verbose
         self.dry_run = dry_run
+        self.debug = debug
+        if debug and not verbose:
+            verbose = debug
         self.output_json = output_json
 
 
@@ -73,10 +79,11 @@ class OrderedGroup(click.Group):
 @click.group(cls=OrderedGroup, invoke_without_command=True, help="Hammerspace hammerscript cli")
 @click.option('-v', '--verbose', count=True, help="Debug output")
 @click.option('-n', '--dry-run', is_flag=True, help="Don't operate on files")
+@click.option('-d', '--debug', is_flag=True, help="Show debug output")
 @click.option('-j', '--json', 'output_json', is_flag=True, help="Use JSON formatted output")
 @click.option('--cmd-tree', is_flag=True, help="Show help for available commands")
 @click.pass_context
-def cli(ctx, verbose, dry_run, output_json, cmd_tree):
+def cli(ctx, verbose, dry_run, debug, output_json, cmd_tree):
     """
     Top level function to kick of click parsing.
     verbose and dry-run are to be respected globally
@@ -90,10 +97,11 @@ def cli(ctx, verbose, dry_run, output_json, cmd_tree):
         sys.exit(0)
 
 
-    ctx.obj = HSGlobals(verbose=verbose, dry_run=dry_run,output_json=output_json)
+    ctx.obj = HSGlobals(verbose=verbose, dry_run=dry_run, debug=debug, output_json=output_json)
     if ctx.obj.verbose > 1:
         print ('V: verbose: ' + str(verbose))
         print ('V: dry_run: ' + str(dry_run))
+        print ('V: debug: ' + str(debug))
         print ('V: output_json: ' + str(output_json))
 
 def print_full_cmd_tree():
@@ -116,6 +124,7 @@ class ShadCmd(object):
         self.ctx = ctx
         self.verbose = self.ctx.obj.verbose
         self.dry_run = self.ctx.obj.dry_run
+        self.debug = self.ctx.obj.debug
         if 'force_json' in kwargs and kwargs['force_json']:
             self.output_json = True
         else:
@@ -154,7 +163,8 @@ class ShadCmd(object):
         exp = None
         if self.checkopt('exp_file', self.kwargs):
             fn = self.kwargs['exp_file']
-            with open(click.format_filename(self.kwargs['exp_file'])) as fd:
+            fn = click.format_filename(fn)
+            with open(fn) as fd:
                 exp = fd.readline()
                 if exp[-1] == '\n':
                     exp = exp[:-1]
@@ -175,21 +185,60 @@ class ShadCmd(object):
 
         self.add_paths(*self.kwargs['pathnames'])
 
+    def open_shadow(self, fname):
+        """
+        Open the exp_file argument, windows/smb can have a hard time deciding
+        if the file exists, so do some tests and then retry in a loop for a
+        while if the first attempt fails
+        """
+        vnprint('open(  '+ fname + '  )')
+        unidprint('open(  '+ fname + '  )')
+        if self.dry_run:
+            return io.StringIO(six.u(""))
+
+        fname = click.format_filename(fname)
+        try:
+            fd = open(fname, 'r')
+        except EnvironmentError as e:
+            if e.errno != errno.ENOENT:
+                raise
+            # FileNotFoundError in python3
+        else:
+            return fd
+
+        # Either windows or not a hammerspace filesystem
+        # Try create the file, it should error
+        try:
+            #fd = open(fname, 'x') python3
+            fd = os.open(fname, os.O_CREAT | os.O_EXCL | os.O_RDONLY)
+        except EnvironmentError as e:
+            if e.errno != errno.EEXIST:
+                raise
+            # FileExistsError in python3
+        else:
+            os.close(fd)
+            raise RuntimeError("Shadow file not found: " + fname)
+
+        # Windows, retry for a while
+        for i in range(1000):
+            try:
+                fd = open(fname, 'r')
+            except EnvironmentError as e:
+                if e.errno != errno.ENOENT:
+                    raise
+                # FileNotFoundError in python3
+            else:
+                vnprint('Took %d attempts to open the shadow file' % (i+2))
+                return fd
+            time.sleep(.1)
+        raise RuntimeError('Shadow file could not be opened even after 1000 tries: ' + fname)
 
     def readlines(self):
         ret = {}
         for shadfile in self.paths:
             ret[shadfile] = []
-            if self.verbose > 0 or self.dry_run:
-                tag = 'V: '
-                if self.dry_run:
-                    tag = 'N: '
-                print(tag + 'open(  '+ shadfile + '  )')
-                if self.dry_run:
-                    ret[shadfile].append("")
-                    continue
             try:
-                fd = open(shadfile)
+                fd = self.open_shadow(shadfile)
             except IOError as e:
                 # non-existant base file is caught in the arg parsing, don't have to handle here
                 errstr = str(e)
@@ -233,7 +282,7 @@ class ShadCmd(object):
 
             for k, v in ret.items():
                 if print_filenames:
-                    self.outstream.write("##### " + k.split('?.')[0] + '\n')
+                    self.outstream.write("##### " + k.split(hss.SHADESC)[0] + '\n')
                 for line in v:
                     self.outstream.write(line)
             self.outstream.flush()
@@ -794,6 +843,14 @@ def vnprint(ctx, line):
         if ctx.obj.dry_run:
             tag = 'N: '
         print(tag + line)
+
+@click.pass_context
+def unidprint(ctx, line):
+    """ Print a line encoded to unicode escape characters if debug, for unicode debugging """
+    if ctx.obj.debug > 0:
+        if isinstance(line, six.text_type):
+            line = line.encode('unicode-escape')
+        print('D unicode-escaped: ' + line)
 
 @cli.command(name='rm', help="Fast offloaded rm -rf")
 @click.option('-r', '-R', '--recursive', is_flag=True, help="Required for fast mode, remove directories and their contents recursively")
