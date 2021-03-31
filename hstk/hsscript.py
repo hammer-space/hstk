@@ -17,20 +17,36 @@ import os
 import random
 import six
 
+# Unicode Magic
+uHAMMER = six.u('\U0001f528')
+UCHARS_NEW = {
+    '>': six.u('\U0000ff1e'),
+    '<': six.u('\U0000ff1c'),
+    ':': six.u('\U0000fe13'),
+    '"': six.u('\U0000201d'),
+    '/': six.u('\U00002215'),
+    '\\': six.u('\U0000ff3c'),
+    '|': six.u('\U0000ff5c'),
+    '?': six.u('\U0000fe16'),
+    '*': six.u('\U00002217'),
+}
+UCHARS_v460 = {
+    '/': six.u('\U00002215'),
+}
+
+
 six.moves.reload_module(sys)
 if (sys.version_info < (3, 0)):
     sys.setdefaultencoding('utf8')
 
-# Unicode special characters
-uHAMMER = u'🔨' # u'\U0001f528'
-uSTAR = u'∗' # u'\U00002217'
-uSLASH = u'∕'  # u'\U00002215'
-
 if os.name == 'nt':
+    UCHARS = UCHARS_NEW
     SHADESC = uHAMMER + '.'
 elif sys.platform == 'darwin':
+    UCHARS = UCHARS_NEW
     SHADESC = uHAMMER + '.'
 else:
+    UCHARS = UCHARS_v460
     SHADESC = '?.'
 
 
@@ -184,14 +200,12 @@ def _do_update_kwargs(def_kwargs, kwargs):
 def _clean_str(value):
     """
     1) Append a random suffix to avoid caching returning stale data
-    2) Allow the use of / in filenames by remapping the character to a unicode
-       character Hammerscript treats as /
-    3) Allow the use of * shadow filenames under windows by remapping the
-       character to a unicode character Hammerscript treats as *
+    2) Allow the use of varoius characters in filenames that are disallowed by
+       POSIX or by windows by remapping to equivilent unicode characters
     """
     ret = value + "/*" + hex(random.randint(0,99999999)) + "*/"
-    ret = ret.replace('/', uSLASH)
-    ret = ret.replace('*', uSTAR)
+    for c, u in UCHARS.items():
+        ret = ret.replace(c, u)
     return ret
 
 
