@@ -850,7 +850,7 @@ def unidprint(ctx, line):
     if ctx.obj.debug > 0:
         if isinstance(line, six.text_type):
             line = line.encode('unicode-escape')
-        print('D unicode-escaped: ' + line)
+        print('D unicode-escaped: '.encode('unicode-escape') + line)
 
 @cli.command(name='rm', help="Fast offloaded rm -rf")
 @click.option('-r', '-R', '--recursive', is_flag=True, help="Required for fast mode, remove directories and their contents recursively")
