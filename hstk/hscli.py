@@ -187,9 +187,7 @@ class ShadCmd(object):
 
     def open_shadow(self, fname):
         """
-        Open the exp_file argument, windows/smb can have a hard time deciding
-        if the file exists, so do some tests and then retry in a loop for a
-        while if the first attempt fails
+        Open the exp_file argument
         """
         vnprint('open(  '+ fname + '  )')
         unidprint('open(  '+ fname + '  )')
@@ -197,41 +195,7 @@ class ShadCmd(object):
             return io.StringIO(six.u(""))
 
         fname = click.format_filename(fname)
-        try:
-            fd = open(fname, 'r')
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise
-            # FileNotFoundError in python3
-        else:
-            return fd
-
-        # Either windows or not a hammerspace filesystem
-        # Try create the file, it should error
-        try:
-            #fd = open(fname, 'x') python3
-            fd = os.open(fname, os.O_CREAT | os.O_EXCL | os.O_RDONLY)
-        except EnvironmentError as e:
-            if e.errno != errno.EEXIST:
-                raise
-            # FileExistsError in python3
-        else:
-            os.close(fd)
-            raise RuntimeError("Shadow file not found: " + fname)
-
-        # Windows, retry for a while
-        for i in range(1000):
-            try:
-                fd = open(fname, 'r')
-            except EnvironmentError as e:
-                if e.errno != errno.ENOENT:
-                    raise
-                # FileNotFoundError in python3
-            else:
-                vnprint('Took %d attempts to open the shadow file' % (i+2))
-                return fd
-            time.sleep(.1)
-        raise RuntimeError('Shadow file could not be opened even after 1000 tries: ' + fname)
+        return open(fname, 'r')
 
     def readlines(self):
         ret = {}
