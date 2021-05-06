@@ -41,7 +41,7 @@ if six.PY2:
 
 if os.name == 'nt':
     UCHARS = UCHARS_NEW
-    SHADESC = ':' + uHAMMER + '.'
+    SHADESC = uHAMMER + '.'
 elif sys.platform == 'darwin':
     UCHARS = UCHARS_NEW
     SHADESC = uHAMMER + '.'
