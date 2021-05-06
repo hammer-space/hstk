@@ -233,7 +233,9 @@ class ShadCmd(object):
             # FileExistsError in python3
         else:
             os.close(fd)
-            raise RuntimeError("Shadow file not found: " + fname)
+            if os.path.isfile(fname):
+                os.unlink(fname)
+            raise RuntimeError("Shadow file not found, are you on a Hammerspace filesystem?: " + fname)
 
         # Windows, retry for a while
         for i in range(1000):
