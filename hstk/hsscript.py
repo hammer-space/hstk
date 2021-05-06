@@ -36,7 +36,7 @@ UCHARS_v460 = {
 
 
 six.moves.reload_module(sys)
-if (sys.version_info < (3, 0)):
+if six.PY2:
     sys.setdefaultencoding('utf8')
 
 if os.name == 'nt':

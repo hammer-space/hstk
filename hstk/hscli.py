@@ -96,6 +96,22 @@ def cli(ctx, verbose, dry_run, debug, output_json, cmd_tree):
         print(ctx.command.get_help(ctx))
         sys.exit(0)
 
+    if six.PY2:
+        if os.name == 'nt':
+            sys.stderr.write("ERROR: Must use python3 for hstk under windows\n")
+            sys.stderr.flush()
+            sys.exit(2)
+        else:
+            #sys.getdefaultencoding() monitor this?
+            #sys.getfilesystemencoding() monitor this?
+            # when running under pytest and python2, sys.stdout is a stringio and doesn't have .encoding
+            if hasattr(sys.stdout, 'encoding') and (not sys.stdout.encoding.startswith('UTF')):
+                sys.stderr.write("ERROR: Must have local configured that works with UTF8\n")
+                sys.stderr.write("       For example, run the following and also add to shell startup scripts\n")
+                sys.stderr.write("           export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8\n")
+                sys.stderr.flush()
+                sys.exit(2)
+
 
     ctx.obj = HSGlobals(verbose=verbose, dry_run=dry_run, debug=debug, output_json=output_json)
     if ctx.obj.verbose > 1:
@@ -192,7 +208,7 @@ class ShadCmd(object):
         vnprint('open(  '+ fname + '  )')
         unidprint('open(  '+ fname + '  )')
         if self.dry_run:
-            return io.StringIO(six.u(""))
+            return six.StringIO(six.u(""))
 
         fname = click.format_filename(fname)
         return open(fname, 'r')
