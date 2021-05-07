@@ -336,26 +336,42 @@ class ShadCmd(object):
         return False
 
 def _param_defaults__pathnames_set_default(func):
+    """
+    Take the *paths and path parameters and convert to 'pathnames' list
+    Also set the default to a single path of '.' if nothing was specified
+    """
     def wrapper(*args, **kwargs):
-        if len(kwargs['pathnames']) == 0:
+        if 'path' in kwargs:
+            kwargs['pathnames'] = [ kwargs['path'] ]
+        if kwargs['pathnames'] is None or len(kwargs['pathnames']) == 0:
             vnprint('Setting default pathname to .')
             kwargs['pathnames'] = [ '.' ]
         func(*args, **kwargs)
     return wrapper
+
 param_defaults = group_decorator(
             click.pass_context,
             click.option('--symlink', type=click.Path(exists=False), nargs=1, default=None, help="Create a symlink file with this name that encodes the shadow command"),
-            click.argument('pathnames', nargs=-1, type=click.Path(exists=True, readable=False)),
+            click.argument('pathnames', metavar='paths', nargs=-1, type=click.Path(exists=True, readable=False)),
             _param_defaults__pathnames_set_default
         )
 
-param_sharepath = click.argument('sharepath', nargs=1, type=click.Path(exists=True, file_okay=False, readable=False), required=True, default=".")
-param_sharepaths = click.argument('sharepaths', nargs=-1, type=click.Path(exists=True, file_okay=False, readable=False), required=True)
-param_path = click.argument('path', nargs=1, type=click.Path(exists=True, readable=False), required=True, default=".")
-param_paths = click.argument('paths', nargs=-1, type=click.Path(exists=True, readable=False), required=True)
-param_dirpath = click.argument('dirpath', nargs=1, type=click.Path(exists=True, file_okay=False, readable=False), required=True, default=".")
-param_dirpaths = click.argument('dirpaths', nargs=-1, type=click.Path(exists=True, file_okay=False, readable=False), required=True)
-param_filepath = click.argument('filepath', nargs=1, type=click.Path(exists=True, dir_okay=False, readable=False), required=True)
+param_path = group_decorator(
+    click.argument('path', nargs=1, type=click.Path(exists=True, readable=False), required=True, default="."),
+    _param_defaults__pathnames_set_default
+)
+param_paths = group_decorator(
+    click.argument('pathnames', metavar='paths', nargs=-1, type=click.Path(exists=True, readable=False)),
+    _param_defaults__pathnames_set_default
+)
+param_dirpaths = group_decorator(
+    click.argument('pathnames', metavar='dirpaths', nargs=-1, type=click.Path(exists=True, file_okay=False, readable=False)),
+    _param_defaults__pathnames_set_default
+)
+param_sharepaths = group_decorator(
+    click.argument('pathnames', metavar='sharepaths', nargs=-1, type=click.Path(exists=True, file_okay=False, readable=False)),
+    _param_defaults__pathnames_set_default
+)
 
 param_recursive = click.option('-r', '--recursive', is_flag=True, help="Apply recursively")
 param_nonfiles = click.option('--nonfiles', is_flag=True, help="Apply recursively to non files")
@@ -402,6 +418,14 @@ param_value = group_decorator(
 param_unbound = group_decorator(
             click.option('-u', '--unbound', is_flag=True, help="Delay binding of any expression, it will be evaluated fresh each time"),
         )
+
+def _cmd_retcode(hscmd, **kwargs):
+    """
+    Run a hammerscript command and return the retcode to the calling process
+    """
+    cmd = ShadCmd(hscmd, kwargs)
+    cmd.run()
+    sys.exit(cmd.exit_status)
 
 #
 # Subcommands with noun only
@@ -537,9 +561,7 @@ def objective():
 @param_read
 @param_defaults
 def do_attribute_list(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.attribute_list, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.attribute_list, **kwargs)
 
 @tag.command(name='list', help="list all tags and values applied")
 @param_eval
@@ -547,45 +569,35 @@ def do_attribute_list(ctx, *args, **kwargs):
 @param_defaults
 @param_unbound
 def do_tag_list(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.tag_list, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.tag_list, **kwargs)
 
 @rekognition_tag.command(name='list', help="list all rekognition tags and values applied")
 @param_eval
 @param_read
 @param_defaults
 def do_rekognition_tag_list(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.rekognition_tag_list, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.rekognition_tag_list, **kwargs)
 
 @keyword.command(name='list', help="list all keywords applied")
 @param_eval
 @param_read
 @param_defaults
 def do_keyword_list(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.keyword_list, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.keyword_list, **kwargs)
 
 @label.command(name='list', help="list all labels applied")
 @param_eval
 @param_read
 @param_defaults
 def do_label_list(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.label_list, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.label_list, **kwargs)
 
 @objective.command(name='list', help="list all (objective,expression) pairs assigned")
 @param_eval
 @param_objective_read
 @param_defaults
 def do_objective_list(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.objective_list, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.objective_list, **kwargs)
 
 
 
@@ -596,9 +608,7 @@ def do_objective_list(ctx, *args, **kwargs):
 @param_unbound
 @param_defaults
 def do_attribute_get(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.attribute_get, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.attribute_get, **kwargs)
 
 @attribute.command(name='has', help="Is the inode's attribute value non-empty")
 @param_eval
@@ -606,9 +616,7 @@ def do_attribute_get(ctx, *args, **kwargs):
 @param_name
 @param_defaults
 def do_attribute_has(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.attribute_get, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.attribute_get, **kwargs)
 
 @tag.command(name='get', help="Get the tag's value")
 @param_eval
@@ -617,9 +625,7 @@ def do_attribute_has(ctx, *args, **kwargs):
 @param_unbound
 @param_defaults
 def do_tag_get(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.tag_get, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.tag_get, **kwargs)
 
 @rekognition_tag.command(name='get', help="Get the rekognition tag's value")
 @param_eval
@@ -628,9 +634,7 @@ def do_tag_get(ctx, *args, **kwargs):
 @param_unbound
 @param_defaults
 def do_rekognition_tag_get(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.rekognition_tag_get, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.rekognition_tag_get, **kwargs)
 
 @tag.command(name='has', help="Is the inode's tag value non-empty")
 @param_eval
@@ -638,9 +642,7 @@ def do_rekognition_tag_get(ctx, *args, **kwargs):
 @param_name
 @param_defaults
 def do_tag_has(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.tag_has, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.tag_has, **kwargs)
 
 @rekognition_tag.command(name='has', help="Is the inode's rekognition tag value non-empty")
 @param_eval
@@ -648,9 +650,7 @@ def do_tag_has(ctx, *args, **kwargs):
 @param_name
 @param_defaults
 def do_rekognition_tag_has(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.rekognition_tag_has, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.rekognition_tag_has, **kwargs)
 
 @keyword.command(name='has', help="Is the keyword assigned to the file")
 @param_eval
@@ -658,9 +658,7 @@ def do_rekognition_tag_has(ctx, *args, **kwargs):
 @param_name
 @param_defaults
 def do_keyword_has(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.keyword_has, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.keyword_has, **kwargs)
 
 @label.command(name='has', help="Is the label assigned to the file")
 @param_eval
@@ -668,9 +666,7 @@ def do_keyword_has(ctx, *args, **kwargs):
 @param_name
 @param_defaults
 def do_label_has(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.label_has, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.label_has, **kwargs)
 
 @objective.command(name='has', help="Get/list objective assignments")
 @param_eval
@@ -679,9 +675,7 @@ def do_label_has(ctx, *args, **kwargs):
 @param_value
 @param_defaults
 def do_objective_has(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.objective_has, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.objective_has, **kwargs)
 
 
 
@@ -692,9 +686,7 @@ def do_objective_has(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_attribute_del(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.attribute_del, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.attribute_del, **kwargs)
 
 @tag.command(name='delete', help="remove tag values from inode(s)")
 @param_name
@@ -703,9 +695,7 @@ def do_attribute_del(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_tag_del(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.tag_del, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.tag_del, **kwargs)
 
 @rekognition_tag.command(name='delete', help="remove rekognition tag values from inode(s)")
 @param_name
@@ -714,9 +704,7 @@ def do_tag_del(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_rekognition_tag_del(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.rekognition_tag_del, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.rekognition_tag_del, **kwargs)
 
 @keyword.command(name='delete', help="remove keywords from inode(s)")
 @param_name
@@ -725,9 +713,7 @@ def do_rekognition_tag_del(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_keyword_del(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.keyword_del, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.keyword_del, **kwargs)
 
 @label.command(name='delete', help="remove labels from inode(s)")
 @param_name
@@ -736,9 +722,7 @@ def do_keyword_del(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_label_del(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.label_del, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.label_del, **kwargs)
 
 @objective.command(name='delete', help="remove (objective,expression) pair from inode(s)")
 @param_name
@@ -748,9 +732,7 @@ def do_label_del(ctx, *args, **kwargs):
 @param_value
 @param_defaults
 def do_objective_del(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.objective_del, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.objective_del, **kwargs)
 
 
 
@@ -760,9 +742,7 @@ def do_objective_del(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_keyword_add(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.keyword_add, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.keyword_add, **kwargs)
 
 @label.command(name='add', help="add a label to inode(s)")
 @param_name
@@ -770,9 +750,7 @@ def do_keyword_add(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_label_add(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.label_add, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.label_add, **kwargs)
 
 @attribute.command(name='set', help="Add/Set value of attribute on inode(s)")
 @param_name
@@ -782,9 +760,7 @@ def do_label_add(ctx, *args, **kwargs):
 @param_defaults
 @param_unbound
 def do_attribute_set(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.attribute_set, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.attribute_set, **kwargs)
 
 @attribute.command(name='add', help="Add/Set value of attribute on inode(s)")
 @param_name
@@ -794,9 +770,7 @@ def do_attribute_set(ctx, *args, **kwargs):
 @param_defaults
 @param_unbound
 def do_attribute_set(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.attribute_set, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.attribute_set, **kwargs)
 
 @tag.command(name='set', help="Add/Set value of tag on inode(s)")
 @param_name
@@ -806,9 +780,7 @@ def do_attribute_set(ctx, *args, **kwargs):
 @param_defaults
 @param_unbound
 def do_tag_set(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.tag_set, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.tag_set, **kwargs)
 
 @rekognition_tag.command(name='set', help="Add/Set value of rekognition tag on inode(s)")
 @param_name
@@ -818,9 +790,7 @@ def do_tag_set(ctx, *args, **kwargs):
 @param_defaults
 @param_unbound
 def do_rekognition_tag_set(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.rekognition_tag_set, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.rekognition_tag_set, **kwargs)
 
 @tag.command(name='add', help="Add/Set value of tag on inode(s)")
 @param_name
@@ -830,9 +800,7 @@ def do_rekognition_tag_set(ctx, *args, **kwargs):
 @param_defaults
 @param_unbound
 def do_tag_set(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.tag_set, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.tag_set, **kwargs)
 
 @rekognition_tag.command(name='add', help="Add/Set value of rekognition tag on inode(s)")
 @param_name
@@ -842,9 +810,7 @@ def do_tag_set(ctx, *args, **kwargs):
 @param_defaults
 @param_unbound
 def do_rekognition_tag_set(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.rekognition_tag_set, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.rekognition_tag_set, **kwargs)
 
 @objective.command(name='add', help="Add (objective,expression) pair to inode(s)")
 @param_name
@@ -854,9 +820,7 @@ def do_rekognition_tag_set(ctx, *args, **kwargs):
 @param_defaults
 @param_unbound
 def do_objective_set(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.objective_add, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+    _cmd_retcode(hss.objective_add, **kwargs)
 
 
 ###
@@ -1280,12 +1244,9 @@ def do_rsync_a_delete(ctx, src, dest, *args, **kwargs):
 @cli.command(name='collsum', help="Usage details about one/all collections in whole share (fast)")
 @click.argument('collection', nargs=1, required=True, default="all")
 @click.option('--collation', nargs=1, required=False)
-@param_sharepath
+@param_sharepaths
 @click.pass_context
-def do_collection_sum(ctx, sharepath, collection, collation, *args, **kwargs):
-    if not sharepath:
-        sharepath = '.'
-    kwargs['pathnames'] = [ sharepath ]
+def do_collection_sum(ctx, collection, collation, *args, **kwargs):
     if collation is None:
         eval_args = {
                 'exp': 'collection_sums("%s")' % (collection),
@@ -1295,7 +1256,7 @@ def do_collection_sum(ctx, sharepath, collection, collation, *args, **kwargs):
                 'exp': 'collection_sums("%s")[SUMMATION("%s")]' % (collection, collation),
             }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 
 
@@ -1310,111 +1271,90 @@ cli.add_command(status)
 @status.command(name='assimilation', help="State of current assimilations")
 @param_sharepaths
 @click.pass_context
-def do_assim_status(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_assim_status(ctx, *args, **kwargs):
     eval_args = {
             'exp': 'assimilation_details',
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @status.command(name='csi', help="Details about the kubernetes CSI")
 @param_sharepaths
 @click.pass_context
-def do_csi_status(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_csi_status(ctx, *args, **kwargs):
     eval_args = {
             'exp': 'attributes.csi_details',
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @status.command(name='collections', help="Collections present in the share")
-@param_sharepath
+@param_sharepaths
 @click.pass_context
-def do_collections_list(ctx, sharepaths, *args, **kwargs):
-    kwargs['pathnames'] = sharepaths
+def do_collections_list(ctx, *args, **kwargs):
     eval_args = {
             'exp': 'collections',
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @status.command(name='errors', help="Files in the share with errors")
-@param_sharepaths
 @click.option('--dump', is_flag=True, help="Dump inode details, only on files in dir+dirpath")
+@param_sharepaths
 @click.pass_context
-def do_errored_files(ctx, sharepaths, dump, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_errored_files(ctx, dump, *args, **kwargs):
     if dump:
         sum_args = {
                 'exp': '(IS_FILE AND ERRORS)?SUMS_TABLE{|KEY=ERRORS,|VALUE={1FILE,SPACE_USED,TOP10_TABLE{{space_used,dpath}}}}',
             }
         kwargs.update(sum_args)
-        ctx.invoke(do_sum, **kwargs)
     else:
         eval_args = {
                 'exp': 'IS_FILE and errors!=0?dump_inode',
                 'recursive': True,
             }
         kwargs.update(eval_args)
-        ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @status.command(name='open', help="Files open each dir(s)")
 @param_dirpaths
 @click.pass_context
-def do_show_open_files(ctx, dirpaths, *args, **kwargs):
-    if not dirpaths:
-        dirpaths = [ '.' ]
-    kwargs['pathnames'] = dirpaths
+def do_show_open_files(ctx, *args, **kwargs):
     sum_args = {
             'exp': '(IS_FILE AND IS_OPEN)?{1FILE,SPACE_USED,TOP10_TABLE{{space_used,dpath}}}',
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @status.command(name='replication', help="Replication progress for the share(s)")
 @param_sharepaths
 @click.pass_context
-def do_replication_status(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_replication_status(ctx, *args, **kwargs):
     eval_args = {
             'exp': 'replication_details',
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @status.command(name='sweeper', help="Progress of sweeper (checks file placement) for each share(s)")
 @param_sharepaths
 @click.pass_context
-def do_sweeper_status(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_sweeper_status(ctx, *args, **kwargs):
     eval_args = {
             'exp': 'sweep_details',
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @status.command(name='volume', help="Health of volumes backing the share(s)")
 @param_sharepaths
 @click.pass_context
-def do_volume_health(ctx, sharepaths, *args, **kwargs):
-    kwargs['pathnames'] = sharepaths
+def do_volume_health(ctx, *args, **kwargs):
     eval_args = {
             'exp': '{|::#A=storage_volumes.name[row],|::#B=storage_volumes.volume_status[row],|::#C=storage_volumes.oper_status[row]}[rows(storage_volumes)]',
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 
 
@@ -1427,11 +1367,10 @@ def usage():
 cli.add_command(usage)
 
 @usage.command(name='alignment', help="Alignment state of files each file(s) of files in dir(s)")
-@param_paths
 @click.option('--top-files', is_flag=True, help="include largest files in each alignment state")
+@param_paths
 @click.pass_context
-def do_file_alignment(ctx, paths, top_files, *args, **kwargs):
-    kwargs['pathnames'] = paths
+def do_file_alignment(ctx, top_files, *args, **kwargs):
     if top_files:
         sum_args = {
                 'exp': 'IS_FILE?SUMS_TABLE{|KEY=OVERALL_ALIGNMENT,|VALUE={1FILE,SPACE_USED,TOP10_TABLE{{space_used,dpath}}}}',
@@ -1441,14 +1380,13 @@ def do_file_alignment(ctx, paths, top_files, *args, **kwargs):
             'exp': 'IS_FILE?SUMS_TABLE{|KEY=OVERALL_ALIGNMENT,|VALUE=1}',
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @usage.command(name='virus-scan', help="Virus scan state of files each file(s) of files in dir(s)")
-@param_paths
 @click.option('--top-files', is_flag=True, help="include largest files in each virus scan state")
+@param_paths
 @click.pass_context
-def do_file_virus_scan(ctx, paths, top_files, *args, **kwargs):
-    kwargs['pathnames'] = paths
+def do_file_virus_scan(ctx, top_files, *args, **kwargs):
     if top_files:
         sum_args = {
                 'exp': 'IS_FILE?SUMS_TABLE{|KEY=ATTRIBUTES.VIRUS_SCAN,|VALUE={1FILE,SPACE_USED,TOP10_TABLE{{space_used,dpath}}}}',
@@ -1458,14 +1396,13 @@ def do_file_virus_scan(ctx, paths, top_files, *args, **kwargs):
             'exp': 'IS_FILE?SUMS_TABLE{|KEY=ATTRIBUTES.VIRUS_SCAN,|VALUE=1}',
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @usage.command(name='owner', help="Owner state of files each file(s) of files in dir(s)")
-@param_paths
 @click.option('--top-files', is_flag=True, help="include largest files of each owner")
+@param_paths
 @click.pass_context
-def do_file_virus_scan(ctx, paths, top_files, *args, **kwargs):
-    kwargs['pathnames'] = paths
+def do_usage_owner(ctx, top_files, *args, **kwargs):
     if top_files:
         sum_args = {
                 'exp': 'IS_FILE?SUMS_TABLE{|KEY=OWNER,|VALUE={1FILE,SPACE_USED,TOP10_TABLE{{space_used,dpath}}}}',
@@ -1475,30 +1412,24 @@ def do_file_virus_scan(ctx, paths, top_files, *args, **kwargs):
             'exp': 'IS_FILE?SUMS_TABLE{|KEY=OWNER,|VALUE=1}',
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @usage.command(name='online', help="Summary of files on NAS volumes in the dir")
 @param_dirpaths
 @click.pass_context
-def do_online_files(ctx, dirpaths, *args, **kwargs):
-    if not dirpaths:
-        dirpaths = [ '.' ]
-    kwargs['pathnames'] = dirpaths
+def do_online_files(ctx, *args, **kwargs):
     sum_args = {
             'exp': 'IS_ONLINE?{1FILE,SPACE_USED,TOP10_TABLE{{space_used,DPATH}}}',
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @usage.command(name='volume', help="Usage for each volume backing each dir(s)")
-@param_paths
 @click.option('--top-files', is_flag=True, help="Show largest files on each volume")
 @click.option('--deep', is_flag=True, help="Might take a long time, XXX")
+@param_paths
 @click.pass_context
-def do_volume_usage(ctx, paths, top_files, deep, *args, **kwargs):
-    if not paths:
-        paths = [ '.' ]
-    kwargs['pathnames'] = paths
+def do_volume_usage(ctx, top_files, deep, *args, **kwargs):
     sum_args = {
             'exp': 'IS_FILE?ROWS(INSTANCES)?SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE=1}[ROWS(INSTANCES)]:SUMS_TABLE{|KEY=#EMPTY,|::VALUE=1}',
         }
@@ -1507,16 +1438,13 @@ def do_volume_usage(ctx, paths, top_files, deep, *args, **kwargs):
         kwargs['exp'] = 'IS_FILE?ROWS(INSTANCES)?SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1FILE,INSTANCES[ROW].SPACE_USED,TOP10_TABLE{{space_used,dpath}}}}[ROWS(INSTANCES)]:SUMS_TABLE{|KEY=#EMPTY,|::VALUE={1FILE, SPACE_USED, TOP10_TABLE{{space_used,dpath}}}}'
     if deep:
         kwargs['exp'] = 'IS_FILE?ROWS(INSTANCES)?SUMS_TABLE{|::KEY=INSTANCES[ROW].VOLUME,|::VALUE={1FILE,INSTANCES[ROW].SPACE_USED,TOP100_TABLE{{space_used,dpath}}}}[ROWS(INSTANCES)]:SUMS_TABLE{|KEY=#EMPTY,|::VALUE={1FILE, SPACE_USED, TOP100_TABLE{{space_used,dpath}}}}'
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @usage.command(name='user', help="Users consuming the most capacity in each dir(s)")
-@param_dirpaths
 @click.option('--details', is_flag=True, help="Include details like largest files per user")
+@param_dirpaths
 @click.pass_context
-def do_users_top_usage(ctx, dirpaths, details, *args, **kwargs):
-    if not dirpaths:
-        dirpaths = [ '.' ]
-    kwargs['pathnames'] = dirpaths
+def do_users_top_usage(ctx, details, *args, **kwargs):
     sum_args = {
             'exp': 'IS_FILE?SUMS_TABLE{|KEY={OWNER,OWNER_GROUP},|VALUE=SPACE_USED}',
         }
@@ -1525,59 +1453,49 @@ def do_users_top_usage(ctx, dirpaths, details, *args, **kwargs):
             'exp': 'IS_FILE?SUMS_TABLE{|KEY={OWNER,OWNER_GROUP},|VALUE={1FILE,SPACE_USED,TOP10_TABLE{{space_used,dpath}}}}',
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @usage.command(name='objectives', help="Objectives applied and capacity managed by dir(s)")
 @param_dirpaths
 @click.pass_context
-def do_objectives_usage(ctx, dirpaths, *args, **kwargs):
-    kwargs['pathnames'] = dirpaths
+def do_objectives_usage(ctx, *args, **kwargs):
     sum_args = {
             'exp': 'IS_FILE?SUMS_TABLE{|::KEY=LIST_OBJECTIVES_ACTIVE[ROW],|::VALUE={1FILE,SPACE_USED,TOP10_TABLE{{space_used,dpath}}}}[ROWS(LIST_OBJECTIVES_ACTIVE)]',
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @usage.command(name='mime_tags', help="All tags added by mime discovery on dir(s)")
 @param_dirpaths
 @click.pass_context
-def do_list_mime_tags(ctx, dirpaths, *args, **kwargs):
-    if not dirpaths:
-        dirpaths = [ '.' ]
-    kwargs['pathnames'] = dirpaths
+def do_list_mime_tags(ctx, *args, **kwargs):
     sum_args = {
             'exp': 'IS_FILE?SUMS_TABLE{attributes.mime.string,{1FILE,SPACE_USED,TOP10_TABLE{{SPACE_USED,DPATH}}}}',
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @usage.command(name='rekognition_tags', help="All tags added by Rekognition on dir(s)")
 @param_dirpaths
 @click.pass_context
-def do_list_rekognition_tags(ctx, dirpaths, *args, **kwargs):
-    if not dirpaths:
-        dirpaths = [ '.' ]
-    kwargs['pathnames'] = dirpaths
+def do_list_rekognition_tags(ctx, **kwargs):
     sum_args = {
             'exp': 'IS_FILE?ISTABLE(LIST_REKOGNITION_TAGS)?SUMS_TABLE{|::KEY=LIST_REKOGNITION_TAGS()[ROW].NAME,|::VALUE={1FILE,TOP10_TABLE{{LIST_REKOGNITION_TAGS()[ROW].value,dpath}}}}[ROWS(LIST_REKOGNITION_TAGS())]',
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 @usage.command(name='dirs', help="Number of subdirectories under specified directory(ies), not including that directory")
 @param_dirpaths
 @click.pass_context
-def do_dirs_count(ctx, dirpaths, *args, **kwargs):
+def do_dirs_count(ctx, *args, **kwargs):
     # Also, an efficient way to follow an assimilation, this will block until it completes
-    if not dirpaths:
-        dirpaths = [ '.' ]
-    kwargs['pathnames'] = dirpaths
     sum_args = {
             'exp': '1',
             'nonfiles': True,
         }
     kwargs.update(sum_args)
-    ctx.invoke(do_sum, **kwargs)
+    _cmd_retcode(hss.sum, **kwargs)
 
 def hs_dirs_count(*paths, **kwargs):
     """Call with one or more directory paths, get the results as JSON"""
@@ -1620,75 +1538,58 @@ def _dot_stats_files(ctx, paths):
 @perf_grp.command(name='clear', help="Clear op/perf counters on share(s)")
 @param_sharepaths
 @click.pass_context
-def do_report_stats_clear(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_report_stats_clear(ctx, *args, **kwargs):
     statsfs = _dot_stats_files(kwargs['pathnames'])
     tag_args = {
             'exp': 'fs_stats.op_stats',
         }
     kwargs.update(tag_args)
-    ctx.invoke(do_tag_set, **kwargs)
+    _cmd_retcode(hss.tag_set, **kwargs)
 
 @perf_grp.command(name='top_calls', help="Show filesystem calls consuming the most time on share(s)")
 @param_sharepaths
 @click.pass_context
-def do_report_stats_top_calls(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_report_stats_top_calls(ctx, *args, **kwargs):
     statsfs = _dot_stats_files(kwargs['pathnames'])
     eval_args = {
             'exp': '{(fs_stats.op_stats-get_tag("old_stats")),TOP100_TABLE{|::KEY={#A[PARENT.ROW].op_count,#A[PARENT.ROW].name,#A[PARENT.ROW].op_count,#A[PARENT.ROW].op_time,#A[PARENT.ROW].op_avg}}[ROWS(#A)]}.#B',
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @perf_grp.command(name='top_funcs', help="Top time consuming functions on share(s)")
-@param_sharepath
 @click.option('--op', nargs=1, default='all', help="Restrict to reporting to funcs in a specific op")
+@param_sharepaths
 @click.pass_context
-def do_report_stats_funcs(ctx, sharepaths, op, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_report_stats_funcs(ctx, op, *args, **kwargs):
     statsfs = _dot_stats_files(kwargs['pathnames'])
     eval_args = {
             'exp': '{(FS_STATS.OP_STATS-get_tag("old_stats"))[|NAME="%s"].func_stats,TOP100_TABLE{|::KEY={#A[PARENT.ROW].op_time,#A[PARENT.ROW].name,#A[PARENT.ROW].op_count,#A[PARENT.ROW].op_avg}}[ROWS(#A)]}.#B' % (op),
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @perf_grp.command(name='top_ops', help="Show filesystem ops consuming the most time by share(s)")
 @param_sharepaths
 @click.pass_context
-def do_report_stats_top_ops(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_report_stats_top_ops(ctx, *args, **kwargs):
     statsfs = _dot_stats_files(kwargs['pathnames'])
     eval_args = {
             'exp': '{(fs_stats.op_stats-get_tag("old_stats")),TOP100_TABLE{|::KEY={#A[PARENT.ROW].op_time,#A[PARENT.ROW].name,#A[PARENT.ROW].op_count,#A[PARENT.ROW].op_time,#A[PARENT.ROW].op_avg}}[ROWS(#A)]}.#B',
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @perf_grp.command(name='flushes', help="Counter for flush transactions by share(s)")
 @param_sharepaths
 @click.pass_context
-def do_report_stats_flushes(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_report_stats_flushes(ctx, *args, **kwargs):
     statsfs = _dot_stats_files(kwargs['pathnames'])
     eval_args = {
             'exp': 'sum({|::#A=(fs_stats.op_stats-get_tag("old_stats"))[ROW].flush_count}[ROWS(fs_stats.op_stats)])',
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
-
-
+    _cmd_retcode(hss.eval, **kwargs)
 
 #
 # Bulk data dumpers
@@ -1699,13 +1600,10 @@ def dump_grp():
 cli.add_command(dump_grp)
 
 @dump_grp.command(name='inode', help="inode metadata")
-@param_paths
 @click.option('--full', is_flag=True, help="Include all available details")
+@param_paths
 @click.pass_context
-def do_inode_dump(ctx, paths, full, *args, **kwargs):
-    if not paths:
-        paths = [ '.' ]
-    kwargs['pathnames'] = paths
+def do_inode_dump(ctx, full, *args, **kwargs):
     eval_args = {
             #'force_json': True,
             'exp': 'DUMP_INODE',
@@ -1715,25 +1613,19 @@ def do_inode_dump(ctx, paths, full, *args, **kwargs):
     if full:
         eval_args['exp'] = "THIS"
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @dump_grp.command(name='iinfo', help="Alternative inode details, always in JSON format")
 @param_paths
 @click.pass_context
-def do_inode_info(ctx, paths, *args, **kwargs):
-    if not paths:
-        paths = [ '.' ]
-    kwargs['pathnames'] = paths
-    cmd = ShadCmd(hss.inode_info, kwargs)
-    cmd.run()
-    sys.exit(cmd.exit_status)
+def do_inode_info(ctx, *args, **kwargs):
+    _cmd_retcode(hss.inode_info, **kwargs)
 
 @dump_grp.command(name='share', help="Full share(s) metadata")
 @click.option('--filter-volume', nargs=1, help="Only report files that have an instance on this volume, provide volume name")
 @param_sharepaths
 @click.pass_context
-def do_share_dump(ctx, sharepaths, filter_volume, *args, **kwargs):
-    kwargs['pathnames'] = sharepaths
+def do_share_dump(ctx, filter_volume, *args, **kwargs):
     eval_args = {
             'exp': 'DUMP_INODE',
             'recursive': True,
@@ -1742,65 +1634,53 @@ def do_share_dump(ctx, sharepaths, filter_volume, *args, **kwargs):
     kwargs.update(eval_args)
     if filter_volume is not None:
         kwargs['exp'] = 'dump_inode_on(storage_volume("%s"))' % (filter_volume)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @dump_grp.command(name='misaligned', help="Dump details about misaligned files on the share(s)")
 @param_sharepaths
 @click.pass_context
-def do_misaligned_files(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_misaligned_files(ctx, *args, **kwargs):
     eval_args = {
             'exp': 'IS_FILE and overall_alignment!=alignment("aligned")?dump_inode',
             'recursive': True,
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @dump_grp.command(name='threat', help="Dump details about files that are a virus threat on the share(s)")
 @param_sharepaths
 @click.pass_context
-def do_threat_files(ctx, sharepaths, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_threat_files(ctx, *args, **kwargs):
     eval_args = {
             'exp': 'IS_FILE and attributes.virus_scan==virus_scan_state("THREAT")?dump_inode',
             'recursive': True,
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @dump_grp.command(name='map_file_to_obj', help="For --native object volumes, dump a mapping between file path and object volume path")
 @click.argument('bucket_name', nargs=1, required=True)
 @param_sharepaths
 @click.pass_context
-def do_dump_map_file_to_obj(ctx, sharepaths, bucket_name, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_dump_map_file_to_obj(ctx, bucket_name, *args, **kwargs):
     eval_args = {
             'exp': '{instances[|volume=storage_volume("%s")],!ISNA(#A)?{PATH,#A.PATH}}.#B' % (bucket_name),
             'recursive': True,
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @dump_grp.command(name='files_on_volume', help="List all files that have data on the specified volume per share(s)")
 @click.argument('volume_name', nargs=1, required=True)
 @param_sharepaths
 @click.pass_context
-def do_dump_files_on_volume(ctx, sharepaths, volume_name, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_dump_files_on_volume(ctx, volume_name, *args, **kwargs):
     eval_args = {
             'exp': '{instances[|volume=storage_volume("%s")],!ISNA(#A)?{PATH}}.#B' % (volume_name),
             'recursive': True,
         }
     kwargs.update(eval_args)
-    ctx.invoke(do_eval, **kwargs)
+    _cmd_retcode(hss.eval, **kwargs)
 
 @dump_grp.command(name='volumes', help="List available volumes in the cluster")
 @param_path
@@ -1889,6 +1769,7 @@ def do_dump_objectives_list(ctx, path, *args, **kwargs):
         print('\n'.join(objs))
 
 ### List XXX all locations (share root, directory, files) that have a local objective
+### List XXX all locations (share root, directory, files) that have a tag/attribute/etc
 
 
 if __name__ == '__main__':
