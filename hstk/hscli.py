@@ -447,7 +447,12 @@ def hs_eval(*args, **kwargs):
 @param_value
 @param_defaults
 def do_sum(ctx, *args, **kwargs):
-    cmd = ShadCmd(hss.sum, kwargs)
+    try:
+        cmd = ShadCmd(hss.sum, kwargs)
+    except ValueError:
+        print(ctx.get_help())
+        print('\n')
+        raise click.UsageError('Must provide expression (-e, -i, --interactive) to sum command')
     cmd.run()
     sys.exit(cmd.exit_status)
 
