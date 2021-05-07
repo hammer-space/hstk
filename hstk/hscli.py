@@ -1278,14 +1278,14 @@ def do_rsync_a_delete(ctx, src, dest, *args, **kwargs):
 
 
 @cli.command(name='collsum', help="Usage details about one/all collections in whole share (fast)")
-@param_sharepaths
 @click.argument('collection', nargs=1, required=True, default="all")
 @click.option('--collation', nargs=1, required=False)
+@param_sharepath
 @click.pass_context
-def do_collection_sum(ctx, sharepaths, collection, collation, *args, **kwargs):
-    if not sharepaths:
-        sharepaths = [ '.' ]
-    kwargs['pathnames'] = sharepaths
+def do_collection_sum(ctx, sharepath, collection, collation, *args, **kwargs):
+    if not sharepath:
+        sharepath = '.'
+    kwargs['pathnames'] = [ sharepath ]
     if collation is None:
         eval_args = {
                 'exp': 'collection_sums("%s")' % (collection),
@@ -1888,6 +1888,7 @@ def do_dump_objectives_list(ctx, path, *args, **kwargs):
     else:
         print('\n'.join(objs))
 
+### List XXX all locations (share root, directory, files) that have a local objective
 
 
 if __name__ == '__main__':
