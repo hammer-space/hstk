@@ -417,7 +417,12 @@ def do_eval(ctx, *args, **kwargs):
         while True:
             cmd = ShadCmd(hss.eval, kwargs)
             cmd.run()
-    cmd = ShadCmd(hss.eval, kwargs)
+    try:
+        cmd = ShadCmd(hss.eval, kwargs)
+    except ValueError:
+        print(ctx.get_help())
+        print('\n')
+        raise click.UsageError('Must provide expression (-e, -i, --interactive) to eval command')
     cmd.run()
     sys.exit(cmd.exit_status)
 
