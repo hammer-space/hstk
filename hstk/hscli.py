@@ -1518,18 +1518,21 @@ def perf_grp():
 cli.add_command(perf_grp)
 
 @click.pass_context
-def _dot_stats_files(ctx, paths):
+def _dot_stats_files_paths(ctx, paths):
+    """
+    This file is used to store the saved off/old stats (counter values) as a tag 'old_stats'
+    """
     statsfs = {}
 
     for path in paths:
         # eval -e path to find the root of the share, create .stats there?
-        statsf = os.path.join(paths, '.stats')
+        statsf = os.path.join(path, '.stats')
 
         if ctx.obj.dry_run:
             vnprint('dry run, not creating .stats file ' + statsf)
         elif not os.path.exists(statsf):
             vnprint('creating .stats file ' + statsf)
-            with open(statsf) as fd:
+            with open(statsf, 'w') as fd:
                 pass
         statsfs[path] = statsf
 
@@ -1539,9 +1542,17 @@ def _dot_stats_files(ctx, paths):
 @param_sharepaths
 @click.pass_context
 def do_report_stats_clear(ctx, *args, **kwargs):
-    statsfs = _dot_stats_files(kwargs['pathnames'])
+    """
+    Doesn't actually 'clear' the stats, just saves off the current counters to a tag 'old_stats' that is then
+    diffed from the latest stats on future reads.  If needed, creates a .stats file to store this tag
+    """
+    # manual method of clearing stats via pdfs
+    # echo hi > $share/?.attribute=pdfs_stats
+    statsfs = _dot_stats_files_paths(kwargs['pathnames'])
     tag_args = {
             'exp': 'fs_stats.op_stats',
+            'name': 'old_stats',
+            'pathnames': statsfs,
         }
     kwargs.update(tag_args)
     _cmd_retcode(hss.tag_set, **kwargs)
@@ -1550,9 +1561,10 @@ def do_report_stats_clear(ctx, *args, **kwargs):
 @param_sharepaths
 @click.pass_context
 def do_report_stats_top_calls(ctx, *args, **kwargs):
-    statsfs = _dot_stats_files(kwargs['pathnames'])
+    statsfs = _dot_stats_files_paths(kwargs['pathnames'])
     eval_args = {
             'exp': '{(fs_stats.op_stats-get_tag("old_stats")),TOP100_TABLE{|::KEY={#A[PARENT.ROW].op_count,#A[PARENT.ROW].name,#A[PARENT.ROW].op_count,#A[PARENT.ROW].op_time,#A[PARENT.ROW].op_avg}}[ROWS(#A)]}.#B',
+            'pathnames': statsfs,
         }
     kwargs.update(eval_args)
     _cmd_retcode(hss.eval, **kwargs)
@@ -1562,9 +1574,10 @@ def do_report_stats_top_calls(ctx, *args, **kwargs):
 @param_sharepaths
 @click.pass_context
 def do_report_stats_funcs(ctx, op, *args, **kwargs):
-    statsfs = _dot_stats_files(kwargs['pathnames'])
+    statsfs = _dot_stats_files_paths(kwargs['pathnames'])
     eval_args = {
             'exp': '{(FS_STATS.OP_STATS-get_tag("old_stats"))[|NAME="%s"].func_stats,TOP100_TABLE{|::KEY={#A[PARENT.ROW].op_time,#A[PARENT.ROW].name,#A[PARENT.ROW].op_count,#A[PARENT.ROW].op_avg}}[ROWS(#A)]}.#B' % (op),
+            'pathnames': statsfs,
         }
     kwargs.update(eval_args)
     _cmd_retcode(hss.eval, **kwargs)
@@ -1573,9 +1586,10 @@ def do_report_stats_funcs(ctx, op, *args, **kwargs):
 @param_sharepaths
 @click.pass_context
 def do_report_stats_top_ops(ctx, *args, **kwargs):
-    statsfs = _dot_stats_files(kwargs['pathnames'])
+    statsfs = _dot_stats_files_paths(kwargs['pathnames'])
     eval_args = {
             'exp': '{(fs_stats.op_stats-get_tag("old_stats")),TOP100_TABLE{|::KEY={#A[PARENT.ROW].op_time,#A[PARENT.ROW].name,#A[PARENT.ROW].op_count,#A[PARENT.ROW].op_time,#A[PARENT.ROW].op_avg}}[ROWS(#A)]}.#B',
+            'pathnames': statsfs,
         }
     kwargs.update(eval_args)
     _cmd_retcode(hss.eval, **kwargs)
@@ -1584,9 +1598,10 @@ def do_report_stats_top_ops(ctx, *args, **kwargs):
 @param_sharepaths
 @click.pass_context
 def do_report_stats_flushes(ctx, *args, **kwargs):
-    statsfs = _dot_stats_files(kwargs['pathnames'])
+    statsfs = _dot_stats_files_paths(kwargs['pathnames'])
     eval_args = {
             'exp': 'sum({|::#A=(fs_stats.op_stats-get_tag("old_stats"))[ROW].flush_count}[ROWS(fs_stats.op_stats)])',
+            'pathnames': statsfs,
         }
     kwargs.update(eval_args)
     _cmd_retcode(hss.eval, **kwargs)
