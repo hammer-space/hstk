@@ -1717,7 +1717,10 @@ def do_dump_volume_list(ctx, path, *args, **kwargs):
         }
     kwargs.update(eval_args)
     hs_res = hs_eval(**kwargs)[path]
-    json_res = json.loads(''.join(hs_res))['STORAGE_VOLUMES_TABLE']
+    if ctx.obj.dry_run:
+        json_res = []
+    else:
+        json_res = json.loads(''.join(hs_res))['STORAGE_VOLUMES_TABLE']
 
     volumes = []
     for vol_json in json_res:
@@ -1746,7 +1749,10 @@ def do_dump_volume_group_list(ctx, path, *args, **kwargs):
     kwargs.update(eval_args)
 
     hs_res = hs_eval(**kwargs)[path]
-    json_res = json.loads(''.join(hs_res))['VOLUME_GROUPS_TABLE']
+    if ctx.obj.dry_run:
+        json_res = []
+    else:
+        json_res = json.loads(''.join(hs_res))['VOLUME_GROUPS_TABLE']
 
     vgs = []
     for vg_json in json_res:
@@ -1769,7 +1775,10 @@ def do_dump_objectives_list(ctx, path, *args, **kwargs):
     kwargs.update(eval_args)
 
     hs_res = hs_eval(**kwargs)[path]
-    json_res = json.loads(''.join(hs_res))['SMART_OBJECTIVES_TABLE']
+    if ctx.obj.dry_run:
+        json_res = []
+    else:
+        json_res = json.loads(''.join(hs_res))['SMART_OBJECTIVES_TABLE']
 
     objs = []
     for obj_json in json_res:
