@@ -799,7 +799,7 @@ def do_rekognition_tag_set(ctx, *args, **kwargs):
 @param_value
 @param_defaults
 @param_unbound
-def do_tag_set(ctx, *args, **kwargs):
+def do_tag_add(ctx, *args, **kwargs):
     _cmd_retcode(hss.tag_set, **kwargs)
 
 @rekognition_tag.command(name='add', help="Add/Set value of rekognition tag on inode(s)")
