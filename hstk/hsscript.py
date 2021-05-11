@@ -392,7 +392,7 @@ def eval(value=None, **kwargs):
     _do_update_kwargs(def_kwargs, kwargs)
 
     if not isinstance(value, HSExp):
-        raise RuntimeError('value must be of type HSExp, passed in type ' + str(type(value)))
+        raise ValueError('value must be of type HSExp, passed in type ' + str(type(value)))
     ret = _build_eval(**kwargs)
     if value.input_json is True:
         ret += " EVAL(EXPRESSION_FROM_JSON('" + str(value) + "'))"
@@ -407,7 +407,7 @@ def sum(value=None, **kwargs):
     _do_update_kwargs(def_kwargs, kwargs)
 
     if not isinstance(value, HSExp):
-        raise RuntimeError('value must be of type HSExp, passed in type ' + str(type(value)))
+        raise ValueError('value must be of type HSExp, passed in type ' + str(type(value)))
     ret = _build_sum(**kwargs);
     if value.input_json is True:
         ret += " EVAL(EXPRESSION_FROM_JSON('" + str(value) + "'))"
