@@ -1795,49 +1795,50 @@ def do_dump_objectives_list(ctx, path, *args, **kwargs):
 #
 # GNS Replication sites
 #
-@click.group(name='gns', help="[sub] Replication / Global Namespace related", cls=OrderedGroup)
-def gns_grp():
+@click.group(name='keep-on-site', help="[sub] sites in the GNS to keep copies of the data on", cls=OrderedGroup)
+def keep_on_site():
     pass
-cli.add_command(gns_grp)
+cli.add_command(keep_on_site)
 
-_GNS_SITE_NAMES_CACHE=None
+# only good for single share, but get new invocation for each path
+_GNS_PARTICIPANT_SITE_NAMES_CACHE=None 
 @click.pass_context
-def _gns_site_names(ctx, pathnames=['.'], force=False):
-    global _GNS_SITE_NAMES_CACHE
-    if not force and _GNS_SITE_NAMES_CACHE is not None:
-        return _GNS_SITE_NAMES_CACHE
+def _gns_participant_site_names(ctx, pathnames=['.'], force=False):
+    global _GNS_PARTICIPANT_SITE_NAMES_CACHE
+    if not force and _GNS_PARTICIPANT_SITE_NAMES_CACHE is not None:
+        return _GNS_PARTICIPANT_SITE_NAMES_CACHE
     eval_args = {
-        'exp': 'SITES',
+        'exp': 'THIS.PARTICIPANTS',
         'force_json': True,
         'pathnames': pathnames[:1],
     }
     eval_res = hs_eval(**eval_args)[pathnames[0]]
     if ctx.obj.dry_run:
-        _GNS_SITE_NAMES_CACHE = [ 'dry_run_test_site1', 'dry_run_test_site2' ]
+        _GNS_PARTICIPANT_SITE_NAMES_CACHE = [ 'dry_run_test_site1', 'dry_run_test_site2' ]
     else:
-        json_res = json.loads(''.join(eval_res))['SITES_TABLE']
+        json_res = json.loads(''.join(eval_res))['PARTICIPANTS_TABLE']
 
-        _GNS_SITE_NAMES_CACHE = []
+        _GNS_PARTICIPANT_SITE_NAMES_CACHE = []
         for site_json in json_res:
-            _GNS_SITE_NAMES_CACHE.append(site_json['NAME'])
+            _GNS_PARTICIPANT_SITE_NAMES_CACHE.append(site_json['SITE_NAME'])
 
-    return _GNS_SITE_NAMES_CACHE
+    return _GNS_PARTICIPANT_SITE_NAMES_CACHE
 
-def _completion_gns_site_names(ctx, args, incomplete):
+def _completion_gns_participant_site_names(ctx, args, incomplete):
     # XXX Upgrade to click 8 to get shell_complete=
     pass
 
 param_site_name = group_decorator(
             # Upgrade to click 8 to get shell_complete=
-            #click.argument('name', metavar='site_name', nargs=1, required=True, shell_complete=_completion_gns_site_names),
+            #click.argument('name', metavar='site_name', nargs=1, required=True, shell_complete=_completion_gns_participant_site_names),
             click.argument('name', metavar='site_name', nargs=1, required=True),
         )
 
-@gns_grp.command(name='sites', help="List known GNS site names")
+@keep_on_site.command(name='available', help="List sites names participating in this share")
 @param_sharepaths
 @click.pass_context
 def do_gns_sites(ctx, *args, **kwargs):
-    sites = _gns_site_names(**kwargs)
+    sites = _gns_participant_site_names(**kwargs)
 
     if ctx.obj.output_json:
         print(json.dumps(sites))
@@ -1845,19 +1846,14 @@ def do_gns_sites(ctx, *args, **kwargs):
         print('\n'.join(sites))
 
 
-@click.group(name='keep-on', help="[sub] Manage GNS site keep-on directives", cls=OrderedGroup)
-def gns_keep_on_grp():
-    pass
-gns_grp.add_command(gns_keep_on_grp)
-
-@gns_keep_on_grp.command(name='list', help="list GNS sites with keep-on rules")
+@keep_on_site.command(name='list', help="list GNS sites with keep-on rules")
 @param_eval
 @param_read
 @param_defaults
 def do_gns_keep_on_list(ctx, *args, **kwargs):
     _cmd_retcode(hss.sites_keep_on_list, **kwargs)
 
-@gns_keep_on_grp.command(name='has', help="Is there already a keep-on rule for the specified GNS site?")
+@keep_on_site.command(name='has', help="Is there already a keep-on rule for the specified GNS site?")
 @param_eval
 @param_read
 @param_site_name
@@ -1865,25 +1861,25 @@ def do_gns_keep_on_list(ctx, *args, **kwargs):
 def do_gns_keep_on_has(ctx, *args, **kwargs):
     _cmd_retcode(hss.sites_keep_on_has, **kwargs)
 
-@gns_keep_on_grp.command(name='delete', help="remove a GNS site keep-on rule")
+@keep_on_site.command(name='delete', help="remove a GNS site keep-on rule")
 @param_site_name
 @param_force
 @param_recursive
 @param_nonfiles
 @param_defaults
 def do_gns_keep_on_del(ctx, *args, **kwargs):
-    if kwargs['name'] not in _gns_site_names():
+    if kwargs['name'] not in _gns_participant_site_names():
         errmsg = "'%s' is not a valid site name\n" % (kwargs['name'])
         raise click.UsageError(errmsg, ctx)
     _cmd_retcode(hss.sites_keep_on_del, **kwargs)
 
-@gns_keep_on_grp.command(name='add', help="add a GNS site keep-on rule")
+@keep_on_site.command(name='add', help="add a GNS site keep-on rule")
 @param_site_name
 @param_recursive
 @param_nonfiles
 @param_defaults
 def do_gns_keep_on_add(ctx, *args, **kwargs):
-    if kwargs['name'] not in _gns_site_names():
+    if kwargs['name'] not in _gns_participant_site_names():
         errmsg = "'%s' is not a valid site name\n" % (kwargs['name'])
         raise click.UsageError(errmsg, ctx)
     _cmd_retcode(hss.sites_keep_on_add, **kwargs)

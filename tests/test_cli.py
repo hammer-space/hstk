@@ -143,9 +143,9 @@ BARE_COMMANDS_KNOWN_TO_FAIL = {
     ( tuple(), 'rsync' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
     ( ('dump', ), 'map_file_to_obj' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
     ( ('dump', ), 'files_on_volume' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
-    ( ('gns', 'keep-on' ), 'add' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
-    ( ('gns', 'keep-on' ), 'has' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
-    ( ('gns', 'keep-on' ), 'delete' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
+    ( ('keep-on-site', ), 'add' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
+    ( ('keep-on-site', ), 'has' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
+    ( ('keep-on-site', ), 'delete' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
 }
 
 CMD_ARGS = {
@@ -162,8 +162,8 @@ CMD_ARGS = {
 CMD_MANUAL_ARGS = {
     # Note, requires the 'subcommand' to be in CMD_ARGS or test will not be run
     # Requires a 'valid' site name, use dry run hard coded list
-    ( ('gns', 'keep-on' ), 'add' ): "dry_run_test_site1",
-    ( ('gns', 'keep-on' ), 'delete' ): "dry_run_test_site2",
+    ( ('keep-on-site', ), 'add' ): "dry_run_test_site1",
+    ( ('keep-on-site', ), 'delete' ): "dry_run_test_site2",
 }
 
 def _check_subcommand_add_args(parentcmds, subcmd):
