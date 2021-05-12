@@ -143,6 +143,9 @@ BARE_COMMANDS_KNOWN_TO_FAIL = {
     ( tuple(), 'rsync' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
     ( ('dump', ), 'map_file_to_obj' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
     ( ('dump', ), 'files_on_volume' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
+    ( ('gns', 'keep-on' ), 'add' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
+    ( ('gns', 'keep-on' ), 'has' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
+    ( ('gns', 'keep-on' ), 'delete' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
 }
 
 CMD_ARGS = {
@@ -156,11 +159,23 @@ CMD_ARGS = {
     'map_file_to_obj': 'bucketname',
     'files_on_volume': 'volumename',
 }
+CMD_MANUAL_ARGS = {
+    # Note, requires the 'subcommand' to be in CMD_ARGS or test will not be run
+    # Requires a 'valid' site name, use dry run hard coded list
+    ( ('gns', 'keep-on' ), 'add' ): "dry_run_test_site1",
+    ( ('gns', 'keep-on' ), 'delete' ): "dry_run_test_site2",
+}
+
 def _check_subcommand_add_args(parentcmds, subcmd):
-    if subcmd.name not in CMD_ARGS:
-        raise RuntimeError('Add command %s to CMD_ARGS' % subcmd.name)
-    subcmd_args = CMD_ARGS[subcmd.name]
-    _simple('-nvd ' + ' '.join([cmd.name for cmd in parentcmds]) + ' ' + subcmd.name + ' ' + subcmd_args)
+    parent_cmds_names = [cmd.name for cmd in parentcmds]
+    key = (tuple(parent_cmds_names), subcmd.name)
+    if key in CMD_MANUAL_ARGS:
+        subcmd_args = CMD_MANUAL_ARGS[key]
+    else:
+        if subcmd.name not in CMD_ARGS:
+            raise RuntimeError('Add command %s to CMD_ARGS' % subcmd.name)
+        subcmd_args = CMD_ARGS[subcmd.name]
+    _simple('-nvd ' + ' '.join(parent_cmds_names) + ' ' + subcmd.name + ' ' + subcmd_args)
 
 def _check_subcommand_bare(parentcmds, subcmd):
     kwargs = {}
@@ -181,7 +196,7 @@ def _check_all_subcommand_groups(parentcmds, clickcmd):
             _simple('-nvd ' + ' '.join([cmd.name for cmd in parentcmds]) + ' ' + subname)
             _check_all_subcommand_groups(parentcmds, subcmd)
         else:
-            log.warning('skipped non-group subcommand %s of command %s', subname, hscli.cli.name)
+            #log.warning('skipped non-group subcommand %s of command %s', subname, hscli.cli.name)
             _check_subcommand_bare(parentcmds, subcmd)
             if subcmd.name in CMD_ARGS:
                 _check_subcommand_add_args(parentcmds, subcmd)
