@@ -385,6 +385,12 @@ objective_has = _gen_read_func('objective', 'has')
 objective_add = _gen_update_func('objective', 'add', 'objectives')
 objective_del = _gen_del_func('objective', 'objectives')
 
+sites_keep_on_list = _gen_list_func('keep_on_site')
+sites_keep_on_has = _gen_read_func('keep_on_site', 'has')
+sites_keep_on_add = _gen_update_func('keep_on_site', 'add', 'keep_on_sites')
+sites_keep_on_del = _gen_del_func('keep_on_site', 'keep_on_sites')
+
+
 def eval(value=None, **kwargs):
     def_kwargs = {}
     def_kwargs.update(_global_args)
