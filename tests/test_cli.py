@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import os
+import sys
+import subprocess as sp
 import logging
 import traceback
 import six
@@ -224,3 +226,27 @@ def test_nvd_keyword_manual():
     _simple('-nvd keyword list')
     _simple('-nvd keyword list testfile1')
 
+def find_hs_bin():
+    cmd = os.path.dirname(sys.executable)
+    cmd = os.path.join(cmd, 'hs')
+    if os.path.exists(cmd):
+        return cmd
+
+    for path in os.environ["PATH"].split(os.pathsep):
+        hs = os.path.join(path, 'hs')
+        if os.path.exists(hs):
+            return hs
+
+    if os.path.exists('./hs'):
+        return './hs'
+
+    return "hs"
+
+def test_nvd_eval_pipe_output():
+    hs = find_hs_bin()
+    if not os.path.exists(hs):
+        log.warning('skipping stdout / stderr pipe testing as the hs command cannot be found')
+        return
+    res = sp.check_call((hs + ' -nvd eval -e 1 testfile1').split(), stdout=sp.PIPE)
+    res = sp.check_call((hs + ' -nvd eval -e 1 testfile1').split(), stderr=sp.PIPE)
+    res = sp.check_call((hs + ' -nvd eval -e 1 testfile1').split(), stdout=sp.PIPE, stderr=sp.PIPE)

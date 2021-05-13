@@ -142,13 +142,25 @@ def cli(ctx, verbose, dry_run, debug, output_json, cmd_tree):
         else:
             #sys.getdefaultencoding() monitor this?
             #sys.getfilesystemencoding() monitor this?
-            # when running under pytest and python2, sys.stdout is a stringio and doesn't have .encoding
-            if hasattr(sys.stdout, 'encoding') and (not sys.stdout.encoding.startswith('UTF')):
-                sys.stderr.write("ERROR: Must have local configured that works with UTF8\n")
-                sys.stderr.write("       For example, run the following and also add to shell startup scripts\n")
-                sys.stderr.write("           export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8\n")
-                sys.stderr.flush()
-                sys.exit(2)
+
+            # Lots o special cases around this
+
+            # check that 'encpding' is there.
+            # when running under pytest and python2, sys.stdout is a stringio
+            # and doesn't have .encoding
+
+            # encoding gets set to None when output is piped
+
+            if hasattr(sys.stdout, 'encoding'):
+                    if sys.stdout.encoding is None:
+                        # Most likely a pipe, don't spew about this
+                        pass
+                    elif not sys.stdout.encoding.startswith('UTF'):
+                        sys.stderr.write("ERROR: Must have local configured that works with UTF8\n")
+                        sys.stderr.write("       For example, run the following and also add to shell startup scripts\n")
+                        sys.stderr.write("           export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8\n")
+                        sys.stderr.flush()
+                        sys.exit(2)
 
 
     ctx.obj = HSGlobals(verbose=verbose, dry_run=dry_run, debug=debug, output_json=output_json)
