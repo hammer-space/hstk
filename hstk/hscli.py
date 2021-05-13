@@ -46,6 +46,7 @@ class OrderedGroup(click.Group):
 
     def __init__(self, commands=None, name=None, **kwargs):
         self._ordered_commands = []
+        self._cmd_aliases = {}
         if commands is not None:
             for cmd in commands:
                 self._ordered_commands.append(cmd.name)
@@ -54,12 +55,49 @@ class OrderedGroup(click.Group):
     def list_commands(self, ctx):
         return self._ordered_commands
 
-    def add_command(self, cmd, name=None):
+    def add_command(self, cmd, name=None, aliases=[]):
         if name is not None:
-            self._ordered_commands.append(name)
+            cmd_name = name
         else:
-            self._ordered_commands.append(cmd.name)
+            cmd_name = cmd.name
+        for alias in aliases:
+            if alias in self._cmd_aliases:
+                raise click.NoSuchOption('Duplicate alias (%s) added to group\n' +
+                         '    New cmd: %s\n' +
+                         '    Orig cmd: %s\n' % (alias, cmd_name))
+            self._cmd_aliases[alias] = cmd_name
+        self._ordered_commands.append(cmd_name)
         super(OrderedGroup, self).add_command(cmd, name=None)
+
+    def add_alias(self, cmd_name, *aliases):
+        for alias in aliases:
+            if alias in self._cmd_aliases:
+                raise click.NoSuchOption('Duplicate alias (%s) added to group\n' +
+                         '    New cmd: %s\n' +
+                         '    Orig cmd: %s\n' % (alias, cmd_name))
+            self._cmd_aliases[alias] = cmd_name
+
+    def get_command(self, ctx, cmd_name):
+        """
+        Command name resolution priority
+        1: exact command name
+        2: exact provided command alias
+        3: try match a command (not alias) short version
+        """
+        if cmd_name in self._ordered_commands:
+            pass
+        elif cmd_name in self._cmd_aliases:
+            cmd_name = self._cmd_aliases[cmd_name]
+        else:
+            matches = [x for x in self.list_commands(ctx)
+                                if x.startswith(cmd_name)]
+            if not matches:
+                return None
+            if len(matches) != 1:
+                ctx.fail('%s matched too many commands: %s' % (cmd_name, ', '.join(sorted(matches))))
+            cmd_name = matches[0]
+
+        return super(OrderedGroup, self).get_command(ctx, cmd_name)
 
     def print_cmd_tree(self, cmd=None, indent=0):
         if cmd is None:
@@ -495,55 +533,75 @@ def hs_sum(*args, **kwargs):
         ret[path] = [ x[:-1] for x in cmd.outstream.readlines() ]
     return ret
 
-
-
 #
 # Subcommands with noun verb, metadata and objectives
 #
 
 attribute_short_help = "[sub] inode metadata: schema yes, value yes"
-@cli.group(short_help=attribute_short_help, cls=OrderedGroup)
-def attribute():
-    attribute_short_help + '\n\n' + """
-    Attributes must exist in the attribute schema before being utilized, see XXX
-    for schema management.  The value must also exist in the associated value
-    schema for that atttribute.  Most values are string type (-s) unless it is a
-    number than an expression (-e)
+attribute_help = """
+attribute: Manage Hammerspace embedded attribute metadata
 
-      ex: hs attribute set -n color -s blue path/to/file
-    """
+Attributes must be crated in the attribute schema using the admin interface
+before they can be used.  The value must also exist in the associated value
+schema for that atttribute.  Most values are string type (-s) unless it is a
+number than an expression (-e)
+
+  ex: hs attribute set -n color -s blue path/to/file
+"""
+@cli.group(help=attribute_help, short_help=attribute_short_help, cls=OrderedGroup)
+def attribute():
+    attribute_short_help + '\n\n' + attribute_help
     pass
 
 keyword_short_help = "[sub] inode metadata: schema no, value no"
-@cli.group(short_help=keyword_short_help, cls=OrderedGroup)
+keyword_help = """
+keyword: Manage Hammerspace embedded keyword metadata
+
+keywords are a flexable metadata type that are created on the fly.  They can not
+store a value.
+"""
+@cli.group(help=keyword_help, short_help=keyword_short_help, cls=OrderedGroup)
 def keyword():
-    keyword_help = keyword_short_help + '\n\n' + """
-    TODO XXX
-    """
+    keyword_short_help + '\n\n' + keyword_help
     pass
 
 label_short_help = "[sub] inode metadata: schema hierarchical, value no"
-@cli.group(short_help=label_short_help, cls=OrderedGroup)
+label_help = """
+label: Manage Hammerspace embedded label metadata
+
+Before a label can be added, it must be added to the labels scema via the admin
+interface.  Labels are good for situations where you want to keep the same
+wording/spelling/capitilaization/etc as well as if you want one label to imply
+a series of parents.
+"""
+@cli.group(help=label_help, short_help=label_short_help, cls=OrderedGroup)
 def label():
-    label_short_help + '\n\n' + """
-    TODO XXX
-    """
+    label_short_help + '\n\n' + label_help
     pass
 
 tag_short_help = "[sub] inode metadata: schema no, value yes"
-@cli.group(short_help=tag_short_help, cls=OrderedGroup)
+tag_help = """
+tag: Manage Hammerspace embedded tag metadata
+
+Tags do not follow a schema (they can be created on the fly) and do not have a
+value that can be stored with the key.  There is not master list of tag names
+that have been used.
+"""
+@cli.group(help=tag_help, short_help=tag_short_help, cls=OrderedGroup)
 def tag():
-    tag_short_help + '\n\n' + """
-    TODO XXX
-    """
+    tag_short_help + '\n\n' + tag_help
     pass
 
 rekognition_tag_short_help = "[sub] inode metadata: schema no, value yes"
-@cli.group(short_help=rekognition_tag_short_help, cls=OrderedGroup)
+rekognition_tag_help = """
+rekognition_tag 
+sub commands are used to view metadata added to an object by AWS's
+rekognition service.  Contact support for details on how to configure
+rekognition.
+"""
+@cli.group(help=rekognition_tag_help, short_help=rekognition_tag_short_help, cls=OrderedGroup)
 def rekognition_tag():
-    rekognition_tag_short_help + '\n\n' + """
-    TODO XXX
-    """
+    rekognition_tag_short_help + '\n\n' + rekognition_tag_help
     pass
 
 objective_short_help = "[sub] control file placement on backend storage"
@@ -1889,6 +1947,33 @@ def do_gns_keep_on_add(ctx, *args, **kwargs):
 ### List XXX all locations (share root, directory, files) that have a local objective
 ### List XXX all locations (share root, directory, files) that have a tag/attribute/etc
 ### List XXX all locations (share root, directory, files) that have a gns keep-on
+
+#
+# Setup aliases
+#
+
+ALIAS_MAPPINGS = {
+        'attribute': ('attributes', 'attr', 'attrs'),
+        'tag': ('tags', ),
+        'label': ('labels', 'lab'),
+        'available': ('avail',),
+        'keyword': ('keywords',),
+        'delete': ('del',),
+        'assimilation': ('assim',),
+        'alignment': ('align',),
+        'collsum': ('collsums', 'colsum', 'colsums'),
+        'objective': ('objectives', 'obj', 'objs'),
+        'rekognition-tag': ('rekognition-tags', ),
+        'keep-on-site': ('keep-on-sites', ),
+}
+def _alias_mappings(cmd):
+    for subname, subcmd in cmd.commands.items():
+        if subname in ALIAS_MAPPINGS:
+            cmd.add_alias(subname, *ALIAS_MAPPINGS[subname])
+        if isinstance(subcmd, OrderedGroup):
+            _alias_mappings(subcmd)
+
+_alias_mappings(cli)
 
 
 if __name__ == '__main__':
