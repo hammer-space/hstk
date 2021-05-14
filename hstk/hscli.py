@@ -46,6 +46,7 @@ class OrderedGroup(click.Group):
 
     def __init__(self, commands=None, name=None, **kwargs):
         self._ordered_commands = []
+        self._cmd_aliases = {}
         if commands is not None:
             for cmd in commands:
                 self._ordered_commands.append(cmd.name)
@@ -54,12 +55,49 @@ class OrderedGroup(click.Group):
     def list_commands(self, ctx):
         return self._ordered_commands
 
-    def add_command(self, cmd, name=None):
+    def add_command(self, cmd, name=None, aliases=[]):
         if name is not None:
-            self._ordered_commands.append(name)
+            cmd_name = name
         else:
-            self._ordered_commands.append(cmd.name)
+            cmd_name = cmd.name
+        for alias in aliases:
+            if alias in self._cmd_aliases:
+                raise click.NoSuchOption('Duplicate alias (%s) added to group\n' +
+                         '    New cmd: %s\n' +
+                         '    Orig cmd: %s\n' % (alias, cmd_name))
+            self._cmd_aliases[alias] = cmd_name
+        self._ordered_commands.append(cmd_name)
         super(OrderedGroup, self).add_command(cmd, name=None)
+
+    def add_alias(self, cmd_name, *aliases):
+        for alias in aliases:
+            if alias in self._cmd_aliases:
+                raise click.NoSuchOption('Duplicate alias (%s) added to group\n' +
+                         '    New cmd: %s\n' +
+                         '    Orig cmd: %s\n' % (alias, cmd_name))
+            self._cmd_aliases[alias] = cmd_name
+
+    def get_command(self, ctx, cmd_name):
+        """
+        Command name resolution priority
+        1: exact command name
+        2: exact provided command alias
+        3: try match a command (not alias) short version
+        """
+        if cmd_name in self._ordered_commands:
+            pass
+        elif cmd_name in self._cmd_aliases:
+            cmd_name = self._cmd_aliases[cmd_name]
+        else:
+            matches = [x for x in self.list_commands(ctx)
+                                if x.startswith(cmd_name)]
+            if not matches:
+                return None
+            if len(matches) != 1:
+                ctx.fail('%s matched too many commands: %s' % (cmd_name, ', '.join(sorted(matches))))
+            cmd_name = matches[0]
+
+        return super(OrderedGroup, self).get_command(ctx, cmd_name)
 
     def print_cmd_tree(self, cmd=None, indent=0):
         if cmd is None:
@@ -104,13 +142,25 @@ def cli(ctx, verbose, dry_run, debug, output_json, cmd_tree):
         else:
             #sys.getdefaultencoding() monitor this?
             #sys.getfilesystemencoding() monitor this?
-            # when running under pytest and python2, sys.stdout is a stringio and doesn't have .encoding
-            if hasattr(sys.stdout, 'encoding') and (not sys.stdout.encoding.startswith('UTF')):
-                sys.stderr.write("ERROR: Must have local configured that works with UTF8\n")
-                sys.stderr.write("       For example, run the following and also add to shell startup scripts\n")
-                sys.stderr.write("           export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8\n")
-                sys.stderr.flush()
-                sys.exit(2)
+
+            # Lots o special cases around this
+
+            # check that 'encpding' is there.
+            # when running under pytest and python2, sys.stdout is a stringio
+            # and doesn't have .encoding
+
+            # encoding gets set to None when output is piped
+
+            if hasattr(sys.stdout, 'encoding'):
+                    if sys.stdout.encoding is None:
+                        # Most likely a pipe, don't spew about this
+                        pass
+                    elif not sys.stdout.encoding.startswith('UTF'):
+                        sys.stderr.write("ERROR: Must have local configured that works with UTF8\n")
+                        sys.stderr.write("       For example, run the following and also add to shell startup scripts\n")
+                        sys.stderr.write("           export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8\n")
+                        sys.stderr.flush()
+                        sys.exit(2)
 
 
     ctx.obj = HSGlobals(verbose=verbose, dry_run=dry_run, debug=debug, output_json=output_json)
@@ -495,55 +545,75 @@ def hs_sum(*args, **kwargs):
         ret[path] = [ x[:-1] for x in cmd.outstream.readlines() ]
     return ret
 
-
-
 #
 # Subcommands with noun verb, metadata and objectives
 #
 
 attribute_short_help = "[sub] inode metadata: schema yes, value yes"
-@cli.group(short_help=attribute_short_help, cls=OrderedGroup)
-def attribute():
-    attribute_short_help + '\n\n' + """
-    Attributes must exist in the attribute schema before being utilized, see XXX
-    for schema management.  The value must also exist in the associated value
-    schema for that atttribute.  Most values are string type (-s) unless it is a
-    number than an expression (-e)
+attribute_help = """
+attribute: Manage Hammerspace embedded attribute metadata
 
-      ex: hs attribute set -n color -s blue path/to/file
-    """
+Attributes must be crated in the attribute schema using the admin interface
+before they can be used.  The value must also exist in the associated value
+schema for that atttribute.  Most values are string type (-s) unless it is a
+number than an expression (-e)
+
+  ex: hs attribute set -n color -s blue path/to/file
+"""
+@cli.group(help=attribute_help, short_help=attribute_short_help, cls=OrderedGroup)
+def attribute():
+    attribute_short_help + '\n\n' + attribute_help
     pass
 
 keyword_short_help = "[sub] inode metadata: schema no, value no"
-@cli.group(short_help=keyword_short_help, cls=OrderedGroup)
+keyword_help = """
+keyword: Manage Hammerspace embedded keyword metadata
+
+keywords are a flexable metadata type that are created on the fly.  They can not
+store a value.
+"""
+@cli.group(help=keyword_help, short_help=keyword_short_help, cls=OrderedGroup)
 def keyword():
-    keyword_help = keyword_short_help + '\n\n' + """
-    TODO XXX
-    """
+    keyword_short_help + '\n\n' + keyword_help
     pass
 
 label_short_help = "[sub] inode metadata: schema hierarchical, value no"
-@cli.group(short_help=label_short_help, cls=OrderedGroup)
+label_help = """
+label: Manage Hammerspace embedded label metadata
+
+Before a label can be added, it must be added to the labels scema via the admin
+interface.  Labels are good for situations where you want to keep the same
+wording/spelling/capitilaization/etc as well as if you want one label to imply
+a series of parents.
+"""
+@cli.group(help=label_help, short_help=label_short_help, cls=OrderedGroup)
 def label():
-    label_short_help + '\n\n' + """
-    TODO XXX
-    """
+    label_short_help + '\n\n' + label_help
     pass
 
 tag_short_help = "[sub] inode metadata: schema no, value yes"
-@cli.group(short_help=tag_short_help, cls=OrderedGroup)
+tag_help = """
+tag: Manage Hammerspace embedded tag metadata
+
+Tags do not follow a schema (they can be created on the fly) and do not have a
+value that can be stored with the key.  There is not master list of tag names
+that have been used.
+"""
+@cli.group(help=tag_help, short_help=tag_short_help, cls=OrderedGroup)
 def tag():
-    tag_short_help + '\n\n' + """
-    TODO XXX
-    """
+    tag_short_help + '\n\n' + tag_help
     pass
 
 rekognition_tag_short_help = "[sub] inode metadata: schema no, value yes"
-@cli.group(short_help=rekognition_tag_short_help, cls=OrderedGroup)
+rekognition_tag_help = """
+rekognition_tag 
+sub commands are used to view metadata added to an object by AWS's
+rekognition service.  Contact support for details on how to configure
+rekognition.
+"""
+@cli.group(help=rekognition_tag_help, short_help=rekognition_tag_short_help, cls=OrderedGroup)
 def rekognition_tag():
-    rekognition_tag_short_help + '\n\n' + """
-    TODO XXX
-    """
+    rekognition_tag_short_help + '\n\n' + rekognition_tag_help
     pass
 
 objective_short_help = "[sub] control file placement on backend storage"
@@ -1795,49 +1865,50 @@ def do_dump_objectives_list(ctx, path, *args, **kwargs):
 #
 # GNS Replication sites
 #
-@click.group(name='gns', help="[sub] Replication / Global Namespace related", cls=OrderedGroup)
-def gns_grp():
+@click.group(name='keep-on-site', help="[sub] sites in the GNS to keep copies of the data on", cls=OrderedGroup)
+def keep_on_site():
     pass
-cli.add_command(gns_grp)
+cli.add_command(keep_on_site)
 
-_GNS_SITE_NAMES_CACHE=None
+# only good for single share, but get new invocation for each path
+_GNS_PARTICIPANT_SITE_NAMES_CACHE=None 
 @click.pass_context
-def _gns_site_names(ctx, pathnames=['.'], force=False):
-    global _GNS_SITE_NAMES_CACHE
-    if not force and _GNS_SITE_NAMES_CACHE is not None:
-        return _GNS_SITE_NAMES_CACHE
+def _gns_participant_site_names(ctx, pathnames=['.'], force=False):
+    global _GNS_PARTICIPANT_SITE_NAMES_CACHE
+    if not force and _GNS_PARTICIPANT_SITE_NAMES_CACHE is not None:
+        return _GNS_PARTICIPANT_SITE_NAMES_CACHE
     eval_args = {
-        'exp': 'SITES',
+        'exp': 'THIS.PARTICIPANTS',
         'force_json': True,
         'pathnames': pathnames[:1],
     }
     eval_res = hs_eval(**eval_args)[pathnames[0]]
     if ctx.obj.dry_run:
-        _GNS_SITE_NAMES_CACHE = [ 'dry_run_test_site1', 'dry_run_test_site2' ]
+        _GNS_PARTICIPANT_SITE_NAMES_CACHE = [ 'dry_run_test_site1', 'dry_run_test_site2' ]
     else:
-        json_res = json.loads(''.join(eval_res))['SITES_TABLE']
+        json_res = json.loads(''.join(eval_res))['PARTICIPANTS_TABLE']
 
-        _GNS_SITE_NAMES_CACHE = []
+        _GNS_PARTICIPANT_SITE_NAMES_CACHE = []
         for site_json in json_res:
-            _GNS_SITE_NAMES_CACHE.append(site_json['NAME'])
+            _GNS_PARTICIPANT_SITE_NAMES_CACHE.append(site_json['SITE_NAME'])
 
-    return _GNS_SITE_NAMES_CACHE
+    return _GNS_PARTICIPANT_SITE_NAMES_CACHE
 
-def _completion_gns_site_names(ctx, args, incomplete):
+def _completion_gns_participant_site_names(ctx, args, incomplete):
     # XXX Upgrade to click 8 to get shell_complete=
     pass
 
 param_site_name = group_decorator(
             # Upgrade to click 8 to get shell_complete=
-            #click.argument('name', metavar='site_name', nargs=1, required=True, shell_complete=_completion_gns_site_names),
+            #click.argument('name', metavar='site_name', nargs=1, required=True, shell_complete=_completion_gns_participant_site_names),
             click.argument('name', metavar='site_name', nargs=1, required=True),
         )
 
-@gns_grp.command(name='sites', help="List known GNS site names")
+@keep_on_site.command(name='available', help="List sites names participating in this share")
 @param_sharepaths
 @click.pass_context
 def do_gns_sites(ctx, *args, **kwargs):
-    sites = _gns_site_names(**kwargs)
+    sites = _gns_participant_site_names(**kwargs)
 
     if ctx.obj.output_json:
         print(json.dumps(sites))
@@ -1845,19 +1916,14 @@ def do_gns_sites(ctx, *args, **kwargs):
         print('\n'.join(sites))
 
 
-@click.group(name='keep-on', help="[sub] Manage GNS site keep-on directives", cls=OrderedGroup)
-def gns_keep_on_grp():
-    pass
-gns_grp.add_command(gns_keep_on_grp)
-
-@gns_keep_on_grp.command(name='list', help="list GNS sites with keep-on rules")
+@keep_on_site.command(name='list', help="list GNS sites with keep-on rules")
 @param_eval
 @param_read
 @param_defaults
 def do_gns_keep_on_list(ctx, *args, **kwargs):
     _cmd_retcode(hss.sites_keep_on_list, **kwargs)
 
-@gns_keep_on_grp.command(name='has', help="Is there already a keep-on rule for the specified GNS site?")
+@keep_on_site.command(name='has', help="Is there already a keep-on rule for the specified GNS site?")
 @param_eval
 @param_read
 @param_site_name
@@ -1865,25 +1931,25 @@ def do_gns_keep_on_list(ctx, *args, **kwargs):
 def do_gns_keep_on_has(ctx, *args, **kwargs):
     _cmd_retcode(hss.sites_keep_on_has, **kwargs)
 
-@gns_keep_on_grp.command(name='delete', help="remove a GNS site keep-on rule")
+@keep_on_site.command(name='delete', help="remove a GNS site keep-on rule")
 @param_site_name
 @param_force
 @param_recursive
 @param_nonfiles
 @param_defaults
 def do_gns_keep_on_del(ctx, *args, **kwargs):
-    if kwargs['name'] not in _gns_site_names():
+    if kwargs['name'] not in _gns_participant_site_names():
         errmsg = "'%s' is not a valid site name\n" % (kwargs['name'])
         raise click.UsageError(errmsg, ctx)
     _cmd_retcode(hss.sites_keep_on_del, **kwargs)
 
-@gns_keep_on_grp.command(name='add', help="add a GNS site keep-on rule")
+@keep_on_site.command(name='add', help="add a GNS site keep-on rule")
 @param_site_name
 @param_recursive
 @param_nonfiles
 @param_defaults
 def do_gns_keep_on_add(ctx, *args, **kwargs):
-    if kwargs['name'] not in _gns_site_names():
+    if kwargs['name'] not in _gns_participant_site_names():
         errmsg = "'%s' is not a valid site name\n" % (kwargs['name'])
         raise click.UsageError(errmsg, ctx)
     _cmd_retcode(hss.sites_keep_on_add, **kwargs)
@@ -1893,6 +1959,33 @@ def do_gns_keep_on_add(ctx, *args, **kwargs):
 ### List XXX all locations (share root, directory, files) that have a local objective
 ### List XXX all locations (share root, directory, files) that have a tag/attribute/etc
 ### List XXX all locations (share root, directory, files) that have a gns keep-on
+
+#
+# Setup aliases
+#
+
+ALIAS_MAPPINGS = {
+        'attribute': ('attributes', 'attr', 'attrs'),
+        'tag': ('tags', ),
+        'label': ('labels', 'lab'),
+        'available': ('avail',),
+        'keyword': ('keywords',),
+        'delete': ('del',),
+        'assimilation': ('assim',),
+        'alignment': ('align',),
+        'collsum': ('collsums', 'colsum', 'colsums'),
+        'objective': ('objectives', 'obj', 'objs'),
+        'rekognition-tag': ('rekognition-tags', ),
+        'keep-on-site': ('keep-on-sites', ),
+}
+def _alias_mappings(cmd):
+    for subname, subcmd in cmd.commands.items():
+        if subname in ALIAS_MAPPINGS:
+            cmd.add_alias(subname, *ALIAS_MAPPINGS[subname])
+        if isinstance(subcmd, OrderedGroup):
+            _alias_mappings(subcmd)
+
+_alias_mappings(cli)
 
 
 if __name__ == '__main__':

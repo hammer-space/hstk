@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 import os
+import sys
+import subprocess as sp
 import logging
 import traceback
 import six
@@ -143,9 +145,9 @@ BARE_COMMANDS_KNOWN_TO_FAIL = {
     ( tuple(), 'rsync' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
     ( ('dump', ), 'map_file_to_obj' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
     ( ('dump', ), 'files_on_volume' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
-    ( ('gns', 'keep-on' ), 'add' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
-    ( ('gns', 'keep-on' ), 'has' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
-    ( ('gns', 'keep-on' ), 'delete' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
+    ( ('keep-on-site', ), 'add' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
+    ( ('keep-on-site', ), 'has' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
+    ( ('keep-on-site', ), 'delete' ): {'expect_exit': 2, 'expect_exception': SystemExit()},
 }
 
 CMD_ARGS = {
@@ -162,8 +164,8 @@ CMD_ARGS = {
 CMD_MANUAL_ARGS = {
     # Note, requires the 'subcommand' to be in CMD_ARGS or test will not be run
     # Requires a 'valid' site name, use dry run hard coded list
-    ( ('gns', 'keep-on' ), 'add' ): "dry_run_test_site1",
-    ( ('gns', 'keep-on' ), 'delete' ): "dry_run_test_site2",
+    ( ('keep-on-site', ), 'add' ): "dry_run_test_site1",
+    ( ('keep-on-site', ), 'delete' ): "dry_run_test_site2",
 }
 
 def _check_subcommand_add_args(parentcmds, subcmd):
@@ -224,3 +226,27 @@ def test_nvd_keyword_manual():
     _simple('-nvd keyword list')
     _simple('-nvd keyword list testfile1')
 
+def find_hs_bin():
+    cmd = os.path.dirname(sys.executable)
+    cmd = os.path.join(cmd, 'hs')
+    if os.path.exists(cmd):
+        return cmd
+
+    for path in os.environ["PATH"].split(os.pathsep):
+        hs = os.path.join(path, 'hs')
+        if os.path.exists(hs):
+            return hs
+
+    if os.path.exists('./hs'):
+        return './hs'
+
+    return "hs"
+
+def test_nvd_eval_pipe_output():
+    hs = find_hs_bin()
+    if not os.path.exists(hs):
+        log.warning('skipping stdout / stderr pipe testing as the hs command cannot be found')
+        return
+    res = sp.check_call((hs + ' -nvd eval -e 1 testfile1').split(), stdout=sp.PIPE)
+    res = sp.check_call((hs + ' -nvd eval -e 1 testfile1').split(), stderr=sp.PIPE)
+    res = sp.check_call((hs + ' -nvd eval -e 1 testfile1').split(), stdout=sp.PIPE, stderr=sp.PIPE)
