@@ -17,37 +17,34 @@ import os
 import random
 import six
 
-# Unicode Magic
-uHAMMER = six.u('\U0001f528')
-UCHARS_NEW = {
-    '>': six.u('\U0000ff1e'),
-    '<': six.u('\U0000ff1c'),
-    ':': six.u('\U0000fe13'),
-    '"': six.u('\U0000201d'),
-    '/': six.u('\U00002215'),
-    '\\': six.u('\U0000ff3c'),
-    '|': six.u('\U0000ff5c'),
-    '?': six.u('\U0000fe16'),
-    '*': six.u('\U00002217'),
-}
-UCHARS_v460 = {
-    '/': six.u('\U00002215'),
-}
-
-
-six.moves.reload_module(sys)
-if six.PY2:
-    sys.setdefaultencoding('utf8')
-
-if os.name == 'nt':
-    UCHARS = UCHARS_NEW
-    SHADESC = uHAMMER + '.'
-elif sys.platform == 'darwin':
-    UCHARS = UCHARS_NEW
-    SHADESC = uHAMMER + '.'
-else:
-    UCHARS = UCHARS_v460
-    SHADESC = '?.'
+#uHAMMER = six.u('\U0001f528')
+#UCHARS_NEW = {
+#    '>': six.u('\U0000ff1e'),
+#    '<': six.u('\U0000ff1c'),
+#    ':': six.u('\U0000fe13'),
+#    '"': six.u('\U0000201d'),
+#    '/': six.u('\U00002215'),
+#    '\\': six.u('\U0000ff3c'),
+#    '|': six.u('\U0000ff5c'),
+#    '?': six.u('\U0000fe16'),
+#    '*': six.u('\U00002217'),
+#}
+#UCHARS_v460 = {
+#    '/': six.u('\U00002215'),
+#}
+#
+#
+#if os.name == 'nt':
+#    UCHARS = UCHARS_NEW
+#    SHADESC = uHAMMER + '.'
+#elif sys.platform == 'darwin':
+#    UCHARS = UCHARS_NEW
+#    SHADESC = uHAMMER + '.'
+#else:
+#    UCHARS = UCHARS_v460
+#    SHADESC = '?.'
+UCHARS = {}
+SHADESC = '?.'
 
 
 class HSExp(object):
@@ -199,11 +196,10 @@ def _do_update_kwargs(def_kwargs, kwargs):
 
 def _clean_str(value):
     """
-    1) Append a random suffix to avoid caching returning stale data
-    2) Allow the use of varoius characters in filenames that are disallowed by
+       Allow the use of varoius characters in filenames that are disallowed by
        POSIX or by windows by remapping to equivilent unicode characters
     """
-    ret = value + "/*" + hex(random.randint(0,99999999)) + "*/"
+    ret = value
     for c, u in UCHARS.items():
         ret = ret.replace(c, u)
     return SHADESC + ret
@@ -398,7 +394,7 @@ def eval(value=None, **kwargs):
     _do_update_kwargs(def_kwargs, kwargs)
 
     if not isinstance(value, HSExp):
-        raise ValueError('value must be of type HSExp, passed in type ' + str(type(value)))
+        raise ValueError(f'value must be of type HSExp, passed in type {str(type(value))}')
     ret = _build_eval(**kwargs)
     if value.input_json is True:
         ret += " EVAL(EXPRESSION_FROM_JSON('" + str(value) + "'))"

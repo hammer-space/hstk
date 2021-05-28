@@ -83,8 +83,6 @@ def _simple(cliargs, expect_exit=0, expect_exception=None):
 def _run_all_args(clickcmd, cliargsbase, cliargssuffix):
     for param in clickcmd.params:
         param_arg = ""
-        if param.name == 'symlink':
-            param_arg = 'filesymlink'
         if param.nargs != 1:
             log.debug('auto skipping test of command %s param %s due to needing a paramater' % (clickcmd.name, param.name))
             continue
@@ -214,7 +212,6 @@ def test_nvd_eval_manual():
     _simple('-nvd eval -e THIS --nonfiles')
     _simple('-nvd eval -e THIS --raw')
     _simple('-nvd eval -e THIS --json')
-    _simple('-nvd eval -e THIS --symlink symlinkfile')
 
 def test_nvd_keyword_manual():
     _simple('-nvd keyword add MOUSE')

@@ -21,8 +21,9 @@ import json
 import pprint
 import time
 import errno
+import random
 import io
-import six
+import pathlib
 import click
 import hstk.hsscript as hss
 
@@ -134,35 +135,6 @@ def cli(ctx, verbose, dry_run, debug, output_json, cmd_tree):
         print(ctx.command.get_help(ctx))
         sys.exit(0)
 
-    if six.PY2:
-        if os.name == 'nt':
-            sys.stderr.write("ERROR: Must use python3 for hstk under windows\n")
-            sys.stderr.flush()
-            sys.exit(2)
-        else:
-            #sys.getdefaultencoding() monitor this?
-            #sys.getfilesystemencoding() monitor this?
-
-            # Lots o special cases around this
-
-            # check that 'encpding' is there.
-            # when running under pytest and python2, sys.stdout is a stringio
-            # and doesn't have .encoding
-
-            # encoding gets set to None when output is piped
-
-            if hasattr(sys.stdout, 'encoding'):
-                    if sys.stdout.encoding is None:
-                        # Most likely a pipe, don't spew about this
-                        pass
-                    elif not sys.stdout.encoding.startswith('UTF'):
-                        sys.stderr.write("ERROR: Must have local configured that works with UTF8\n")
-                        sys.stderr.write("       For example, run the following and also add to shell startup scripts\n")
-                        sys.stderr.write("           export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8\n")
-                        sys.stderr.flush()
-                        sys.exit(2)
-
-
     ctx.obj = HSGlobals(verbose=verbose, dry_run=dry_run, debug=debug, output_json=output_json)
     if ctx.obj.verbose > 1:
         print ('V: verbose: ' + str(verbose))
@@ -202,7 +174,6 @@ class ShadCmd(object):
         self.output_returns_error = False
         self.exit_status = 0
 
-        self.symlink_name = None
         self._paths = None
         self.shadgen = shadgen
         self.kwargs = kwargs
@@ -222,9 +193,6 @@ class ShadCmd(object):
             self.kwargs['json'] = True
         else:
             self.kwargs['json'] = False
-
-        if self.checkopt('symlink', self.kwargs):
-            self.symlink_name = self.kwargs['symlink']
 
         exp = None
         if self.checkopt('exp_file', self.kwargs):
@@ -251,97 +219,75 @@ class ShadCmd(object):
 
         self.add_paths(*self.kwargs['pathnames'])
 
-    def open_shadow(self, fname):
+    def run_cmd(self, fname):
         """
-        Open the exp_file argument, windows/smb can have a hard time deciding
-        if the file exists, so do some tests and then retry in a loop for a
-        while if the first attempt fails
+        Create the .fs_command_gateway file for the exp_file argument and write the command
+        then read from the .fs_command_gateway file
         """
-        vnprint('open(  '+ fname + '  )')
-        unidprint('open(  '+ fname + '  )')
+        ret = []
+
+        work_id = hex(random.randint(0,99999999))
+        if fname.is_dir():
+            gw = fname
+            cmd = './'
+        else:
+            gw = fname.parent
+            cmd = './' + fname.name
+        gw = gw / f'.fs_command_gateway {work_id}'
+
+        # First open, send the command
+        vnprint(f'open( {gw} )')
+        unidprint(f'open( {gw} )')
         if self.dry_run:
-            return six.StringIO(six.u(""))
-
-        fname = click.format_filename(fname)
-        try:
-            fd = open(fname, 'r')
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise
-            # FileNotFoundError in python3
+            fd = io.StringIO()
         else:
-            return fd
+            fd = gw.open('w')
 
-        # Either windows or not a hammerspace filesystem
-        # Try create the file, it should error
         try:
-            #fd = open(fname, 'x') python3
-            fd = os.open(fname, os.O_CREAT | os.O_EXCL | os.O_RDONLY)
-        except EnvironmentError as e:
-            if e.errno != errno.EEXIST:
-                raise
-            # FileExistsError in python3
-        else:
-            os.close(fd)
-            if os.path.isfile(fname):
-                os.unlink(fname)
-            raise RuntimeError("Shadow file not found, are you on a Hammerspace filesystem?: " + fname)
-
-        # Windows, retry for a while
-        for i in range(1000):
-            try:
-                fd = open(fname, 'r')
-            except EnvironmentError as e:
-                if e.errno != errno.ENOENT:
-                    raise
-                # FileNotFoundError in python3
+            cmd += self.shadgen(**self.kwargs)
+        except ValueError as e:
+            if (        ('value' not in self.kwargs)
+                    or  ('value' in self.kwargs and (not kwargs['value'])) ):
+                sys.stderr.write('No expression (-e) provided')
+                sys.exit(2)
             else:
-                vnprint('Took %d attempts to open the shadow file' % (i+2))
-                return fd
-            time.sleep(.1)
-        raise RuntimeError('Shadow file could not be opened even after 1000 tries: ' + fname)
+                raise e
+        vnprint(f'write( {cmd} )')
+        unidprint(f'write( {cmd} )')
+        fd.write(cmd)
 
-    def readlines(self):
-        ret = {}
-        for shadfile in self.paths:
-            ret[shadfile] = []
-            try:
-                fd = self.open_shadow(shadfile)
-            except IOError as e:
-                # non-existant base file is caught in the arg parsing, don't have to handle here
-                errstr = str(e)
-                # For clarity, remove the extra random data added to the end to
-                # avoid shadow file caching for the error message
-                errstr = errstr.split('\u2215')[0]
-                errstr = errstr.replace("u'", "")
-                errstr = errstr.replace("'", "")
-                raise click.ClickException(errstr)
-            ret[shadfile].extend(fd.readlines())
-            fd.close()
+        vnprint(f'close( {gw} )')
+        unidprint(f'close( {gw} )')
+        fd.close()
+
+        # open again to collect the results
+        vnprint(f'open( {gw} )')
+        unidprint(f'open( {gw} )')
+        if self.dry_run:
+            fd = io.StringIO('dry run output')
+        else:
+            fd = gw.open('r')
+        vnprint(f'read()')
+        unidprint(f'read()')
+        ret = fd.readlines()
+        vnprint(f'close( {gw} )')
+        unidprint(f'close( {gw} )')
+        fd.close()
+
         return ret
 
-    def mksymlink(self):
+    def runshad(self):
         ret = {}
-        for shadfile in self.paths:
-            ret[shadfile] = []
-            symprint = 'symlink("'+ shadfile + '", "' + self.symlink_name + '")'
-            if self.verbose > 0 or self.dry_run:
-                tag = 'V: '
-                if self.dry_run:
-                    tag = 'N: '
-                print(tag + symprint)
-                if self.dry_run:
-                    ret[shadfile].append("")
-                    continue
-            os.symlink(shadfile, self.symlink_name)
-            ret[shadfile].append("")
+
+        # Kick off the shadow commands one at a time, fix to run in parallel XXX
+        for path in self.paths:
+            ret[path] = []
+            lines = self.run_cmd(path)
+            ret[path].extend(lines)
         return ret
 
     def run(self):
-        if self.symlink_name is not None:
-            ret = self.mksymlink()
-        else:
-            ret = self.readlines()
+        ret = self.runshad()
         if self.outstream is not None:
 
             print_filenames = False
@@ -350,7 +296,7 @@ class ShadCmd(object):
 
             for k, v in ret.items():
                 if print_filenames:
-                    self.outstream.write("##### " + k.split(hss.SHADESC)[0] + '\n')
+                    self.outstream.write('##### {k}\n')
                 for line in v:
                     self.outstream.write(line)
             self.outstream.flush()
@@ -374,11 +320,8 @@ class ShadCmd(object):
     def add_paths(self, *paths):
         if self._paths is None:
             self._paths = []
-        shadcmd = self.shadgen(**self.kwargs)
         for path in paths:
-            if path[-1] != '/' and os.path.isdir(path):
-                path += '/'
-            self._paths.append(path + shadcmd)
+            self._paths.append(pathlib.Path(path))
 
     def checkopt(self, opt, optsdict):
         if opt in optsdict and optsdict[opt] not in (None, False):
@@ -401,7 +344,6 @@ def _param_defaults__pathnames_set_default(func):
 
 param_defaults = group_decorator(
             click.pass_context,
-            click.option('--symlink', type=click.Path(exists=False), nargs=1, default=None, help="Create a symlink file with this name that encodes the shadow command"),
             click.argument('pathnames', metavar='paths', nargs=-1, type=click.Path(exists=True, readable=False)),
             _param_defaults__pathnames_set_default
         )
@@ -508,7 +450,7 @@ def hs_eval(*args, **kwargs):
     ret = {}
     for path in orig_pathnames:
         kwargs['pathnames'] = [ path ]
-        kwargs['outstream'] = six.StringIO()
+        kwargs['outstream'] = io.StringIO()
         cmd = ShadCmd(hss.eval, kwargs)
         cmd.run()
         cmd.outstream.seek(0)
@@ -538,7 +480,7 @@ def hs_sum(*args, **kwargs):
     ret = {}
     for path in orig_pathnames:
         kwargs['pathnames'] = [ path ]
-        kwargs['outstream'] = six.StringIO()
+        kwargs['outstream'] = io.StringIO()
         cmd = ShadCmd(hss.sum, kwargs)
         cmd.run()
         cmd.outstream.seek(0)
@@ -910,7 +852,7 @@ def vnprint(ctx, line):
 def unidprint(ctx, line):
     """ Print a line encoded to unicode escape characters if debug, for unicode debugging """
     if ctx.obj.debug > 0:
-        if isinstance(line, six.text_type):
+        if isinstance(line, str):
             line = line.encode('unicode-escape')
         print('D unicode-escaped: '.encode('unicode-escape') + line)
 
