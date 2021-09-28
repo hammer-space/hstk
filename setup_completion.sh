@@ -16,4 +16,4 @@
 HSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export PATH="$HSDIR:$PATH"
-eval "$(_HS_COMPLETE=source hs)"
+eval "$(LANG=en_US.utf8 _HS_COMPLETE=source hs)"

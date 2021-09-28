@@ -57,7 +57,7 @@ shell completion
 The above pip and rpm install methods don't configure shell completion.  The
 short version, for bash, to enable system wide completions, add this file
     $ cat /etc/bash_completion.d/hs_bash_completion
-    eval "$(_HS_COMPLETE=source hs)"
+    eval "$(LANG=en_US.utf8 _HS_COMPLETE=source hs)"
 
 More details on how to enable shell completion are available from the
 [Click Project](https://click.palletsprojects.com/en/6.x/bashcomplete/)
