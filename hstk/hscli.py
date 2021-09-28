@@ -495,10 +495,10 @@ attribute_short_help = "[sub] inode metadata: schema yes, value yes"
 attribute_help = """
 attribute: Manage Hammerspace embedded attribute metadata
 
-Attributes must be crated in the attribute schema using the admin interface
+Attributes must be created in the attribute schema using the admin interface
 before they can be used.  The value must also exist in the associated value
-schema for that atttribute.  Most values are string type (-s) unless it is a
-number than an expression (-e)
+schema for that attribute.  Most attribute values are of type string (-s),
+though numbers are type expression (-e)
 
   ex: hs attribute set -n color -s blue path/to/file
 """
@@ -511,8 +511,8 @@ keyword_short_help = "[sub] inode metadata: schema no, value no"
 keyword_help = """
 keyword: Manage Hammerspace embedded keyword metadata
 
-keywords are a flexable metadata type that are created on the fly.  They can not
-store a value.
+Keyword is a flexable metadata type that is created on the fly.
+It cannot store a value.
 """
 @cli.group(help=keyword_help, short_help=keyword_short_help, cls=OrderedGroup)
 def keyword():
@@ -523,9 +523,9 @@ label_short_help = "[sub] inode metadata: schema hierarchical, value no"
 label_help = """
 label: Manage Hammerspace embedded label metadata
 
-Before a label can be added, it must be added to the labels scema via the admin
-interface.  Labels are good for situations where you want to keep the same
-wording/spelling/capitilaization/etc as well as if you want one label to imply
+Before a label can be added, it must be created in the labels scema via the admin
+interface.  Labels are good for situations where you want to enforce the same
+wording/spelling/capitalization/etc as well as if you want one label to imply
 a series of parents.
 """
 @cli.group(help=label_help, short_help=label_short_help, cls=OrderedGroup)
@@ -537,9 +537,11 @@ tag_short_help = "[sub] inode metadata: schema no, value yes"
 tag_help = """
 tag: Manage Hammerspace embedded tag metadata
 
-Tags do not follow a schema (they can be created on the fly) and do not have a
-value that can be stored with the key.  There is not master list of tag names
-that have been used.
+Tags do not follow a schema, they can be created on the fly. Tags do not have a
+value that can be stored with the key.  There is no list of tag names
+that have been applied to the files of a share, the only way to generate a list
+is to check all files in the share, which can be done via Hammerscript
+expression.
 """
 @cli.group(help=tag_help, short_help=tag_short_help, cls=OrderedGroup)
 def tag():
