@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 #
 # Copyright 2021 Hammerspace
@@ -12,37 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
-import os
-import random
-import six
-
-#uHAMMER = six.u('\U0001f528')
-#UCHARS_NEW = {
-#    '>': six.u('\U0000ff1e'),
-#    '<': six.u('\U0000ff1c'),
-#    ':': six.u('\U0000fe13'),
-#    '"': six.u('\U0000201d'),
-#    '/': six.u('\U00002215'),
-#    '\\': six.u('\U0000ff3c'),
-#    '|': six.u('\U0000ff5c'),
-#    '?': six.u('\U0000fe16'),
-#    '*': six.u('\U00002217'),
-#}
-#UCHARS_v460 = {
-#    '/': six.u('\U00002215'),
-#}
-#
-#
-#if os.name == 'nt':
-#    UCHARS = UCHARS_NEW
-#    SHADESC = uHAMMER + '.'
-#elif sys.platform == 'darwin':
-#    UCHARS = UCHARS_NEW
-#    SHADESC = uHAMMER + '.'
-#else:
-#    UCHARS = UCHARS_v460
-#    SHADESC = '?.'
 UCHARS = {}
 SHADESC = '?.'
 
@@ -108,7 +77,7 @@ def _build_sum(**kwargs):
         ret += '_json'
     return ret
 
-_set_args = { 'recursive': False , 'nonfiles': False }
+_set_args = { 'recursive': False, 'nonfiles': False }
 def _build_set(**kwargs):
     tset = set()
     for tkey in _set_args.keys():
@@ -210,6 +179,7 @@ def _gen_list_func(gen_mdtype=None):
     def_kwargs.update(_eval_args)
     def_kwargs.update(_inheritance_args)
     def_kwargs.update(_global_args)
+
     def list_template(unbound=False, gen_mdtype=gen_mdtype, def_kwargs=def_kwargs, **kwargs):
         _do_update_kwargs(def_kwargs, kwargs)
         ret = _build_eval(**kwargs) + " list_" + gen_mdtype + 's' + _build_inheritance(**kwargs)
@@ -223,6 +193,7 @@ def _gen_read_func(gen_mdtype=None, gen_read_type=None):
     def_kwargs.update(_eval_args)
     def_kwargs.update(_inheritance_args)
     def_kwargs.update(_global_args)
+
     def read_template(name=None, value=None,
             unbound=False, gen_mdtype=gen_mdtype, gen_read_type=gen_read_type,
             def_kwargs=def_kwargs, **kwargs):
@@ -262,6 +233,7 @@ def _gen_update_func(gen_mdtype=None, gen_update_type=None, gen_table=None):
     def_kwargs = {}
     def_kwargs.update(_set_args)
     def_kwargs.update(_global_args)
+
     def update_template(name=None, value=HSExp(exp='true', string=True, input_json=False), unbound=False,
             gen_mdtype=gen_mdtype, gen_update_type=gen_update_type, gen_table=gen_table,
             def_kwargs=def_kwargs, **kwargs):
@@ -308,6 +280,7 @@ def _gen_del_func(gen_mdtype=None, gen_table=None):
     def_kwargs = {}
     def_kwargs.update(_set_args)
     def_kwargs.update(_global_args)
+
     def del_template(name=None, value=None,
             gen_mdtype=gen_mdtype, gen_table=gen_table,
             def_kwargs=def_kwargs, **kwargs):
@@ -410,7 +383,7 @@ def sum(value=None, **kwargs):
 
     if not isinstance(value, HSExp):
         raise ValueError('value must be of type HSExp, passed in type ' + str(type(value)))
-    ret = _build_sum(**kwargs);
+    ret = _build_sum(**kwargs)
     if value.input_json is True:
         ret += " EVAL(EXPRESSION_FROM_JSON('" + str(value) + "'))"
     else:

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 #
 # Copyright 2021 Hammerspace
@@ -14,13 +14,10 @@
 
 import copy
 import subprocess as sp
-import functools
 import sys
 import os
 import json
 import pprint
-import time
-import errno
 import random
 import io
 import pathlib
@@ -63,9 +60,9 @@ class OrderedGroup(click.Group):
             cmd_name = cmd.name
         for alias in aliases:
             if alias in self._cmd_aliases:
-                raise click.NoSuchOption('Duplicate alias (%s) added to group\n' +
-                         '    New cmd: %s\n' +
-                         '    Orig cmd: %s\n' % (alias, cmd_name))
+                raise click.NoSuchOption(f'Duplicate alias ({alias}) added to group\n' +
+                         '    New cmd: {cmd_name}\n' +
+                         '    Orig cmd: {self._cmd_aliases[alias]}\n')
             self._cmd_aliases[alias] = cmd_name
         self._ordered_commands.append(cmd_name)
         super(OrderedGroup, self).add_command(cmd, name=None)
@@ -73,9 +70,9 @@ class OrderedGroup(click.Group):
     def add_alias(self, cmd_name, *aliases):
         for alias in aliases:
             if alias in self._cmd_aliases:
-                raise click.NoSuchOption('Duplicate alias (%s) added to group\n' +
-                         '    New cmd: %s\n' +
-                         '    Orig cmd: %s\n' % (alias, cmd_name))
+                raise click.NoSuchOption(f'Duplicate alias ({alias}) added to group\n' +
+                         '    New cmd: {cmd_name}\n' +
+                         '    Orig cmd: {self._cmd_aliases[alias]}\n')
             self._cmd_aliases[alias] = cmd_name
 
     def get_command(self, ctx, cmd_name):
@@ -247,7 +244,7 @@ class ShadCmd(object):
             cmd += self.shadgen(**self.kwargs)
         except ValueError as e:
             if (        ('value' not in self.kwargs)
-                    or  ('value' in self.kwargs and (not kwargs['value'])) ):
+                    or  ('value' in self.kwargs and (not self.kwargs['value'])) ):
                 sys.stderr.write('No expression (-e) provided')
                 sys.exit(2)
             else:
@@ -267,8 +264,8 @@ class ShadCmd(object):
             fd = io.StringIO('dry run output')
         else:
             fd = gw.open('r')
-        vnprint(f'read()')
-        unidprint(f'read()')
+        vnprint('read()')
+        unidprint('read()')
         ret = fd.readlines()
         vnprint(f'close( {gw} )')
         unidprint(f'close( {gw} )')
@@ -296,7 +293,7 @@ class ShadCmd(object):
 
             for k, v in ret.items():
                 if print_filenames:
-                    self.outstream.write('##### {k}\n')
+                    self.outstream.write(f'##### {k}\n')
                 for line in v:
                     self.outstream.write(line)
             self.outstream.flush()
@@ -491,14 +488,13 @@ def hs_sum(*args, **kwargs):
 # Subcommands with noun verb, metadata and objectives
 #
 
-attribute_short_help = "[sub] inode metadata: schema yes, value yes"
+attribute_short_help = "[sub] inode metadata: schema no, value yes"
 attribute_help = """
 attribute: Manage Hammerspace embedded attribute metadata
 
-Attributes must be created in the attribute schema using the admin interface
-before they can be used.  The value must also exist in the associated value
-schema for that attribute.  Most attribute values are of type string (-s),
-though numbers are type expression (-e)
+Attributes can be defined on the fly, no schema pre-creation required.
+Attributes can also hold a value.  Most values are string type (-s) but may
+also be a number or expression (-e)
 
   ex: hs attribute set -n color -s blue path/to/file
 """
@@ -511,8 +507,8 @@ keyword_short_help = "[sub] inode metadata: schema no, value no"
 keyword_help = """
 keyword: Manage Hammerspace embedded keyword metadata
 
-Keyword is a flexable metadata type that is created on the fly.
-It cannot store a value.
+Keyword is a flexable metadata type that is created on the fly.  A keyword can
+not store a value.
 """
 @cli.group(help=keyword_help, short_help=keyword_short_help, cls=OrderedGroup)
 def keyword():
@@ -523,10 +519,10 @@ label_short_help = "[sub] inode metadata: schema hierarchical, value no"
 label_help = """
 label: Manage Hammerspace embedded label metadata
 
-Before a label can be added, it must be created in the labels scema via the admin
-interface.  Labels are good for situations where you want to enforce the same
-wording/spelling/capitalization/etc as well as if you want one label to imply
-a series of parents.
+Before a label can be added, it must be added to the labels scema via the admin
+interface using the label-* admin cli commands.  Labels are good for situations
+where you want to enforce the same wording/spelling/capitilaization/etc as well
+as if you want one label to imply a series of parents.
 """
 @cli.group(help=label_help, short_help=label_short_help, cls=OrderedGroup)
 def label():
@@ -537,11 +533,10 @@ tag_short_help = "[sub] inode metadata: schema no, value yes"
 tag_help = """
 tag: Manage Hammerspace embedded tag metadata
 
-Tags do not follow a schema, they can be created on the fly. Tags do not have a
-value that can be stored with the key.  There is no list of tag names
-that have been applied to the files of a share, the only way to generate a list
-is to check all files in the share, which can be done via Hammerscript
-expression.
+Tags do not follow a schema (they can be created on the fly) and do not have a
+value that can be stored with the key.  There is no list of tag names that have
+been applied to the files of a share, the only way to generate a list is to
+check all files in the share, which can be done via Hammerscript expression.
 """
 @cli.group(help=tag_help, short_help=tag_short_help, cls=OrderedGroup)
 def tag():
@@ -783,7 +778,7 @@ def do_attribute_set(ctx, *args, **kwargs):
 @param_value
 @param_defaults
 @param_unbound
-def do_attribute_set(ctx, *args, **kwargs):
+def do_attribute_add(ctx, *args, **kwargs):
     _cmd_retcode(hss.attribute_set, **kwargs)
 
 @tag.command(name='set', help="Add/Set value of tag on inode(s)")
@@ -823,7 +818,7 @@ def do_tag_add(ctx, *args, **kwargs):
 @param_value
 @param_defaults
 @param_unbound
-def do_rekognition_tag_set(ctx, *args, **kwargs):
+def do_rekognition_tag_add(ctx, *args, **kwargs):
     _cmd_retcode(hss.rekognition_tag_set, **kwargs)
 
 @objective.command(name='add', help="Add (objective,expression) pair to inode(s)")
@@ -885,7 +880,7 @@ def do_rm_rf(ctx, *args, **kwargs):
     # Custom handle non-flag passthrough options
     if opt == 'interactive':
         call_out_args.append('--' + opt)
-        if kwargs[opt] != None:
+        if kwargs[opt] is not None:
             call_out_args.append(kwargs[opt])
 
     if len(call_out_args) > 0 or not (kwargs['force'] and kwargs['recursive']):
@@ -1108,11 +1103,6 @@ def do_rsync_a_delete(ctx, src, dest, *args, **kwargs):
 
     src_undelete = False
 
-    if os.path.isfile(dest):
-        dest_is_file = True
-    else:
-        dest_is_file = False
-
     if os.path.isdir(dest):
         dest_is_dir = True
     else:
@@ -1228,8 +1218,14 @@ def do_rsync_a_delete(ctx, src, dest, *args, **kwargs):
         dest_stat = os.stat(dest)
         if src_stat.st_ino == dest_stat.st_ino:
             versions = hs_eval(exp='VERSION', pathnames=[src, dest])
-            versions[src] = int(versions[src][0])
-            versions[dest] = int(versions[dest][0])
+            try:
+                versions[src] = int(versions[src][0])
+                versions[dest] = int(versions[dest][0])
+            except Exception as e:
+                print('Error parsing response from VERSION, response was:')
+                pprint.pprint(versions)
+                sys.stdout.flush()
+                raise e
             if versions[src] == 2 and (not src_undelete):
                 vnprint("Trying to restore from .snapshot/current source and dest are the same file, doing nothing")
                 sys.exit(0)
@@ -1817,7 +1813,7 @@ cli.add_command(keep_on_site)
 # only good for single share, but get new invocation for each path
 _GNS_PARTICIPANT_SITE_NAMES_CACHE=None 
 @click.pass_context
-def _gns_participant_site_names(ctx, pathnames=['.'], force=False):
+def _gns_participant_site_names(ctx, pathnames=['.'], force=False, **kwargs):
     global _GNS_PARTICIPANT_SITE_NAMES_CACHE
     if not force and _GNS_PARTICIPANT_SITE_NAMES_CACHE is not None:
         return _GNS_PARTICIPANT_SITE_NAMES_CACHE
@@ -1882,7 +1878,7 @@ def do_gns_keep_on_has(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_gns_keep_on_del(ctx, *args, **kwargs):
-    if kwargs['name'] not in _gns_participant_site_names():
+    if kwargs['name'] not in _gns_participant_site_names(**kwargs):
         errmsg = "'%s' is not a valid site name\n" % (kwargs['name'])
         raise click.UsageError(errmsg, ctx)
     _cmd_retcode(hss.sites_keep_on_del, **kwargs)
@@ -1893,7 +1889,7 @@ def do_gns_keep_on_del(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_gns_keep_on_add(ctx, *args, **kwargs):
-    if kwargs['name'] not in _gns_participant_site_names():
+    if kwargs['name'] not in _gns_participant_site_names(**kwargs):
         errmsg = "'%s' is not a valid site name\n" % (kwargs['name'])
         raise click.UsageError(errmsg, ctx)
     _cmd_retcode(hss.sites_keep_on_add, **kwargs)
