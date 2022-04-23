@@ -1,7 +1,7 @@
 ## Installation instructions for Windows
 
-hstk requires python 3 to run and can only operate against a Hammerspace SMB
-endpoint.
+hstk requires python 3 to run and can only operate against a Hammerspace SMB or
+NFS endpoint.
 
 1. Install python3 for Windows. https://www.python.org/downloads/
 2. Verify that pip is installed along with python. From a command prompt, run:

@@ -1,7 +1,7 @@
 ## Installation instructions for Linux
 
-hstk requires python 3 to run and can only operate against a Hammerspace SMB
-endpoint.
+hstk requires python 3 to run and can only operate against a Hammerspace NFS or
+SMB endpoint.
 
 1. Ensure that an up2date version of python3 is installed
 ```
