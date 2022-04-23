@@ -1,16 +1,16 @@
-Installation instructions for Windows
+## Installation instructions for Windows
 
 hstk requires python 3 to run and can only operate against a Hammerspace SMB
 endpoint.
 
 1. Install python3 for Windows. https://www.python.org/downloads/
 2. Verify that pip is installed along with python. From a command prompt, run:
-
+```
 C:\Users\Administrator> pip -V
 pip 22.0.4 from C:\Program Files\Python310\lib\site-packages\pip (python 3.10)
-
+```
 3. Install hstk
-
+```
 C:\Users\Administrator> pip install hstk
 Collecting hstk
   Downloading hstk-4.6.3.5-py3-none-any.whl (25 kB)
@@ -23,9 +23,9 @@ Collecting colorama
   Downloading colorama-0.4.4-py2.py3-none-any.whl (16 kB)
 Installing collected packages: six, colorama, Click, hstk
 Successfully installed Click-8.1.2 colorama-0.4.4 hstk-4.6.3.5 six-1.16.0
-
+```
 4. Verify that it was installed by running it to print the help.
-
+```
 C:\Users\Administrator>hs
 Usage: hs [OPTIONS] COMMAND [ARGS]...
 
@@ -57,3 +57,4 @@ Commands:
   perf             [sub] Performance and operation stats
   dump             [sub] Dump info about various items
   keep-on-site     [sub] sites in the GNS to keep copies of the data on
+```
