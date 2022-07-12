@@ -22,7 +22,16 @@ import random
 import io
 import pathlib
 import click
+import platform
 import hstk.hsscript as hss
+
+# Windows compatability stuff
+if platform.system().startswith('Windows') or platform.system().startswith('CYGWIN'):
+    WINDOWS = True
+    WIN_PADDING = '\0'*50
+else:
+    WINDOWS = False
+    WIN_PADDING = ''
 
 
 # Helper object for containing global settings to be passed with context
@@ -248,8 +257,16 @@ class ShadCmd(object):
                 sys.exit(2)
             else:
                 raise e
+
+        # Add padding for windows, writes don't get pushed through the stack for if there is not enough data
+        cmd += WIN_PADDING
+
         vnprint(f'write( {cmd} )')
         fd.write(cmd)
+
+        # The flush here is only to make debugging easier so sync doesn't happen on close
+        vnprint(f'flush()')
+        fd.flush()
 
         vnprint(f'close( {gw} )')
         fd.close()
