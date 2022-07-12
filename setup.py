@@ -31,6 +31,7 @@ requirements = open(path.join(here, 'requirements.txt')).readlines()
 setup(
     name=pkg_name,
     version=version,
+    python_requires='>=3.6.0',
     description='Hammerspace CLI tool and python toolkit (hstk)',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -44,5 +45,31 @@ setup(
         'console_scripts': [
             'hs=hstk.hscli:cli'
         ]
-    }
+    },
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Environment :: Console',
+        'License :: OSI Approved :: Apache Software License',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Operating System :: POSIX :: Linux',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: MacOS',
+        'Intended Audience :: System Administrators',
+        'Intended Audience :: Information Technology',
+        'Topic :: Office/Business',
+        'Topic :: System :: Archiving',
+        'Topic :: System :: Archiving :: Backup',
+        'Topic :: System :: Archiving :: Compression',
+        'Topic :: System :: Archiving :: Mirroring',
+        'Topic :: System :: Filesystems',
+        'Topic :: System :: Clustering',
+        'Topic :: System :: Distributed Computing',
+        'Topic :: System :: Monitoring',
+        'Topic :: System :: Systems Administration',
+        'Topic :: Utilities',
+    ],
+    keywords=["hammerspace", "hammerscript", 'metadata', 'global filesystem', 'archive', 'object', 's3', 'nfs', 'nfs4', 'nfs4.2', 'smb' ],
 )

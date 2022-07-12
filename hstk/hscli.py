@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 #
 # Copyright 2021 Hammerspace
@@ -14,17 +14,24 @@
 
 import copy
 import subprocess as sp
-import functools
 import sys
 import os
 import json
 import pprint
-import time
-import errno
+import random
 import io
-import six
+import pathlib
 import click
+import platform
 import hstk.hsscript as hss
+
+# Windows compatability stuff
+if platform.system().startswith('Windows') or platform.system().startswith('CYGWIN'):
+    WINDOWS = True
+    WIN_PADDING = '\0'*50
+else:
+    WINDOWS = False
+    WIN_PADDING = ''
 
 
 # Helper object for containing global settings to be passed with context
@@ -62,9 +69,9 @@ class OrderedGroup(click.Group):
             cmd_name = cmd.name
         for alias in aliases:
             if alias in self._cmd_aliases:
-                raise click.NoSuchOption('Duplicate alias (%s) added to group\n' +
-                         '    New cmd: %s\n' +
-                         '    Orig cmd: %s\n' % (alias, cmd_name))
+                raise click.NoSuchOption(f'Duplicate alias ({alias}) added to group\n' +
+                         '    New cmd: {cmd_name}\n' +
+                         '    Orig cmd: {self._cmd_aliases[alias]}\n')
             self._cmd_aliases[alias] = cmd_name
         self._ordered_commands.append(cmd_name)
         super(OrderedGroup, self).add_command(cmd, name=None)
@@ -72,9 +79,9 @@ class OrderedGroup(click.Group):
     def add_alias(self, cmd_name, *aliases):
         for alias in aliases:
             if alias in self._cmd_aliases:
-                raise click.NoSuchOption('Duplicate alias (%s) added to group\n' +
-                         '    New cmd: %s\n' +
-                         '    Orig cmd: %s\n' % (alias, cmd_name))
+                raise click.NoSuchOption(f'Duplicate alias ({alias}) added to group\n' +
+                         '    New cmd: {cmd_name}\n' +
+                         '    Orig cmd: {self._cmd_aliases[alias]}\n')
             self._cmd_aliases[alias] = cmd_name
 
     def get_command(self, ctx, cmd_name):
@@ -134,35 +141,6 @@ def cli(ctx, verbose, dry_run, debug, output_json, cmd_tree):
         print(ctx.command.get_help(ctx))
         sys.exit(0)
 
-    if six.PY2:
-        if os.name == 'nt':
-            sys.stderr.write("ERROR: Must use python3 for hstk under windows\n")
-            sys.stderr.flush()
-            sys.exit(2)
-        else:
-            #sys.getdefaultencoding() monitor this?
-            #sys.getfilesystemencoding() monitor this?
-
-            # Lots o special cases around this
-
-            # check that 'encpding' is there.
-            # when running under pytest and python2, sys.stdout is a stringio
-            # and doesn't have .encoding
-
-            # encoding gets set to None when output is piped
-
-            if hasattr(sys.stdout, 'encoding'):
-                    if sys.stdout.encoding is None:
-                        # Most likely a pipe, don't spew about this
-                        pass
-                    elif not sys.stdout.encoding.startswith('UTF'):
-                        sys.stderr.write("ERROR: Must have local configured that works with UTF8\n")
-                        sys.stderr.write("       For example, run the following and also add to shell startup scripts\n")
-                        sys.stderr.write("           export LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8\n")
-                        sys.stderr.flush()
-                        sys.exit(2)
-
-
     ctx.obj = HSGlobals(verbose=verbose, dry_run=dry_run, debug=debug, output_json=output_json)
     if ctx.obj.verbose > 1:
         print ('V: verbose: ' + str(verbose))
@@ -202,7 +180,6 @@ class ShadCmd(object):
         self.output_returns_error = False
         self.exit_status = 0
 
-        self.symlink_name = None
         self._paths = None
         self.shadgen = shadgen
         self.kwargs = kwargs
@@ -222,9 +199,6 @@ class ShadCmd(object):
             self.kwargs['json'] = True
         else:
             self.kwargs['json'] = False
-
-        if self.checkopt('symlink', self.kwargs):
-            self.symlink_name = self.kwargs['symlink']
 
         exp = None
         if self.checkopt('exp_file', self.kwargs):
@@ -251,97 +225,79 @@ class ShadCmd(object):
 
         self.add_paths(*self.kwargs['pathnames'])
 
-    def open_shadow(self, fname):
+    def run_cmd(self, fname):
         """
-        Open the exp_file argument, windows/smb can have a hard time deciding
-        if the file exists, so do some tests and then retry in a loop for a
-        while if the first attempt fails
+        Create the .fs_command_gateway file for the exp_file argument and write the command
+        then read from the .fs_command_gateway file
         """
-        vnprint('open(  '+ fname + '  )')
-        unidprint('open(  '+ fname + '  )')
+        ret = []
+
+        work_id = hex(random.randint(0,99999999))
+        if fname.is_dir():
+            gw = fname
+            cmd = './'
+        else:
+            gw = fname.parent
+            cmd = './' + fname.name
+        gw = gw / f'.fs_command_gateway {work_id}'
+
+        # First open, send the command
+        vnprint(f'open( {gw} )')
         if self.dry_run:
-            return six.StringIO(six.u(""))
-
-        fname = click.format_filename(fname)
-        try:
-            fd = open(fname, 'r')
-        except EnvironmentError as e:
-            if e.errno != errno.ENOENT:
-                raise
-            # FileNotFoundError in python3
+            fd = io.StringIO()
         else:
-            return fd
+            fd = gw.open('w')
 
-        # Either windows or not a hammerspace filesystem
-        # Try create the file, it should error
         try:
-            #fd = open(fname, 'x') python3
-            fd = os.open(fname, os.O_CREAT | os.O_EXCL | os.O_RDONLY)
-        except EnvironmentError as e:
-            if e.errno != errno.EEXIST:
-                raise
-            # FileExistsError in python3
-        else:
-            os.close(fd)
-            if os.path.isfile(fname):
-                os.unlink(fname)
-            raise RuntimeError("Shadow file not found, are you on a Hammerspace filesystem?: " + fname)
-
-        # Windows, retry for a while
-        for i in range(1000):
-            try:
-                fd = open(fname, 'r')
-            except EnvironmentError as e:
-                if e.errno != errno.ENOENT:
-                    raise
-                # FileNotFoundError in python3
+            cmd += self.shadgen(**self.kwargs)
+        except ValueError as e:
+            if (        ('value' not in self.kwargs)
+                    or  ('value' in self.kwargs and (not self.kwargs['value'])) ):
+                sys.stderr.write('No expression (-e) provided')
+                sys.exit(2)
             else:
-                vnprint('Took %d attempts to open the shadow file' % (i+2))
-                return fd
-            time.sleep(.1)
-        raise RuntimeError('Shadow file could not be opened even after 1000 tries: ' + fname)
+                raise e
 
-    def readlines(self):
-        ret = {}
-        for shadfile in self.paths:
-            ret[shadfile] = []
-            try:
-                fd = self.open_shadow(shadfile)
-            except IOError as e:
-                # non-existant base file is caught in the arg parsing, don't have to handle here
-                errstr = str(e)
-                # For clarity, remove the extra random data added to the end to
-                # avoid shadow file caching for the error message
-                errstr = errstr.split('\u2215')[0]
-                errstr = errstr.replace("u'", "")
-                errstr = errstr.replace("'", "")
-                raise click.ClickException(errstr)
-            ret[shadfile].extend(fd.readlines())
-            fd.close()
+        # Add padding for windows, writes don't get pushed through the stack for if there is not enough data
+        cmd += WIN_PADDING
+
+        vnprint(f'write( {cmd} )')
+        fd.write(cmd)
+
+        # The flush here is only to make debugging easier so sync doesn't happen on close
+        vnprint(f'flush()')
+        fd.flush()
+
+        vnprint(f'close( {gw} )')
+        fd.close()
+
+        # open again to collect the results
+        vnprint(f'open( {gw} )')
+        if self.dry_run:
+            fd = io.StringIO('dry run output')
+        else:
+            fd = gw.open('r')
+        vnprint('calling read()')
+        ret = fd.readlines()
+        vnprint(f'read() returned {len(ret)} lines {len("".join(ret))} bytes')
+
+        vnprint(f'close( {gw} )')
+        fd.close()
+
         return ret
 
-    def mksymlink(self):
+    def runshad(self):
         ret = {}
-        for shadfile in self.paths:
-            ret[shadfile] = []
-            symprint = 'symlink("'+ shadfile + '", "' + self.symlink_name + '")'
-            if self.verbose > 0 or self.dry_run:
-                tag = 'V: '
-                if self.dry_run:
-                    tag = 'N: '
-                print(tag + symprint)
-                if self.dry_run:
-                    ret[shadfile].append("")
-                    continue
-            os.symlink(shadfile, self.symlink_name)
-            ret[shadfile].append("")
+
+        # Kick off the shadow commands one at a time, fix to run in parallel XXX
+        for path in self.paths:
+            ret[path] = []
+            lines = self.run_cmd(path)
+            ret[path].extend(lines)
         return ret
 
     def run(self):
-        if self.symlink_name is not None:
-            ret = self.mksymlink()
-        else:
-            ret = self.readlines()
+        ret = self.runshad()
         if self.outstream is not None:
 
             print_filenames = False
@@ -350,7 +306,7 @@ class ShadCmd(object):
 
             for k, v in ret.items():
                 if print_filenames:
-                    self.outstream.write("##### " + k.split(hss.SHADESC)[0] + '\n')
+                    self.outstream.write(f'##### {k}\n')
                 for line in v:
                     self.outstream.write(line)
             self.outstream.flush()
@@ -374,11 +330,8 @@ class ShadCmd(object):
     def add_paths(self, *paths):
         if self._paths is None:
             self._paths = []
-        shadcmd = self.shadgen(**self.kwargs)
         for path in paths:
-            if path[-1] != '/' and os.path.isdir(path):
-                path += '/'
-            self._paths.append(path + shadcmd)
+            self._paths.append(pathlib.Path(path))
 
     def checkopt(self, opt, optsdict):
         if opt in optsdict and optsdict[opt] not in (None, False):
@@ -401,7 +354,6 @@ def _param_defaults__pathnames_set_default(func):
 
 param_defaults = group_decorator(
             click.pass_context,
-            click.option('--symlink', type=click.Path(exists=False), nargs=1, default=None, help="Create a symlink file with this name that encodes the shadow command"),
             click.argument('pathnames', metavar='paths', nargs=-1, type=click.Path(exists=True, readable=False)),
             _param_defaults__pathnames_set_default
         )
@@ -508,7 +460,7 @@ def hs_eval(*args, **kwargs):
     ret = {}
     for path in orig_pathnames:
         kwargs['pathnames'] = [ path ]
-        kwargs['outstream'] = six.StringIO()
+        kwargs['outstream'] = io.StringIO()
         cmd = ShadCmd(hss.eval, kwargs)
         cmd.run()
         cmd.outstream.seek(0)
@@ -538,7 +490,7 @@ def hs_sum(*args, **kwargs):
     ret = {}
     for path in orig_pathnames:
         kwargs['pathnames'] = [ path ]
-        kwargs['outstream'] = six.StringIO()
+        kwargs['outstream'] = io.StringIO()
         cmd = ShadCmd(hss.sum, kwargs)
         cmd.run()
         cmd.outstream.seek(0)
@@ -549,14 +501,13 @@ def hs_sum(*args, **kwargs):
 # Subcommands with noun verb, metadata and objectives
 #
 
-attribute_short_help = "[sub] inode metadata: schema yes, value yes"
+attribute_short_help = "[sub] inode metadata: schema no, value yes"
 attribute_help = """
 attribute: Manage Hammerspace embedded attribute metadata
 
-Attributes must be crated in the attribute schema using the admin interface
-before they can be used.  The value must also exist in the associated value
-schema for that atttribute.  Most values are string type (-s) unless it is a
-number than an expression (-e)
+Attributes can be defined on the fly, no schema pre-creation required.
+Attributes can also hold a value.  Most values are string type (-s) but may
+also be a number or expression (-e)
 
   ex: hs attribute set -n color -s blue path/to/file
 """
@@ -569,8 +520,8 @@ keyword_short_help = "[sub] inode metadata: schema no, value no"
 keyword_help = """
 keyword: Manage Hammerspace embedded keyword metadata
 
-keywords are a flexable metadata type that are created on the fly.  They can not
-store a value.
+Keyword is a flexable metadata type that is created on the fly.  A keyword can
+not store a value.
 """
 @cli.group(help=keyword_help, short_help=keyword_short_help, cls=OrderedGroup)
 def keyword():
@@ -582,9 +533,9 @@ label_help = """
 label: Manage Hammerspace embedded label metadata
 
 Before a label can be added, it must be added to the labels scema via the admin
-interface.  Labels are good for situations where you want to keep the same
-wording/spelling/capitilaization/etc as well as if you want one label to imply
-a series of parents.
+interface using the label-* admin cli commands.  Labels are good for situations
+where you want to enforce the same wording/spelling/capitilaization/etc as well
+as if you want one label to imply a series of parents.
 """
 @cli.group(help=label_help, short_help=label_short_help, cls=OrderedGroup)
 def label():
@@ -596,8 +547,9 @@ tag_help = """
 tag: Manage Hammerspace embedded tag metadata
 
 Tags do not follow a schema (they can be created on the fly) and do not have a
-value that can be stored with the key.  There is not master list of tag names
-that have been used.
+value that can be stored with the key.  There is no list of tag names that have
+been applied to the files of a share, the only way to generate a list is to
+check all files in the share, which can be done via Hammerscript expression.
 """
 @cli.group(help=tag_help, short_help=tag_short_help, cls=OrderedGroup)
 def tag():
@@ -839,7 +791,7 @@ def do_attribute_set(ctx, *args, **kwargs):
 @param_value
 @param_defaults
 @param_unbound
-def do_attribute_set(ctx, *args, **kwargs):
+def do_attribute_add(ctx, *args, **kwargs):
     _cmd_retcode(hss.attribute_set, **kwargs)
 
 @tag.command(name='set', help="Add/Set value of tag on inode(s)")
@@ -879,7 +831,7 @@ def do_tag_add(ctx, *args, **kwargs):
 @param_value
 @param_defaults
 @param_unbound
-def do_rekognition_tag_set(ctx, *args, **kwargs):
+def do_rekognition_tag_add(ctx, *args, **kwargs):
     _cmd_retcode(hss.rekognition_tag_set, **kwargs)
 
 @objective.command(name='add', help="Add (objective,expression) pair to inode(s)")
@@ -905,14 +857,6 @@ def vnprint(ctx, line):
         if ctx.obj.dry_run:
             tag = 'N: '
         print(tag + line)
-
-@click.pass_context
-def unidprint(ctx, line):
-    """ Print a line encoded to unicode escape characters if debug, for unicode debugging """
-    if ctx.obj.debug > 0:
-        if isinstance(line, six.text_type):
-            line = line.encode('unicode-escape')
-        print('D unicode-escaped: '.encode('unicode-escape') + line)
 
 @cli.command(name='rm', help="Fast offloaded rm -rf")
 @click.option('-r', '-R', '--recursive', is_flag=True, help="Required for fast mode, remove directories and their contents recursively")
@@ -941,7 +885,7 @@ def do_rm_rf(ctx, *args, **kwargs):
     # Custom handle non-flag passthrough options
     if opt == 'interactive':
         call_out_args.append('--' + opt)
-        if kwargs[opt] != None:
+        if kwargs[opt] is not None:
             call_out_args.append(kwargs[opt])
 
     if len(call_out_args) > 0 or not (kwargs['force'] and kwargs['recursive']):
@@ -1164,11 +1108,6 @@ def do_rsync_a_delete(ctx, src, dest, *args, **kwargs):
 
     src_undelete = False
 
-    if os.path.isfile(dest):
-        dest_is_file = True
-    else:
-        dest_is_file = False
-
     if os.path.isdir(dest):
         dest_is_dir = True
     else:
@@ -1284,8 +1223,14 @@ def do_rsync_a_delete(ctx, src, dest, *args, **kwargs):
         dest_stat = os.stat(dest)
         if src_stat.st_ino == dest_stat.st_ino:
             versions = hs_eval(exp='VERSION', pathnames=[src, dest])
-            versions[src] = int(versions[src][0])
-            versions[dest] = int(versions[dest][0])
+            try:
+                versions[src] = int(versions[src][0])
+                versions[dest] = int(versions[dest][0])
+            except Exception as e:
+                print('Error parsing response from VERSION, response was:')
+                pprint.pprint(versions)
+                sys.stdout.flush()
+                raise e
             if versions[src] == 2 and (not src_undelete):
                 vnprint("Trying to restore from .snapshot/current source and dest are the same file, doing nothing")
                 sys.exit(0)
@@ -1873,7 +1818,7 @@ cli.add_command(keep_on_site)
 # only good for single share, but get new invocation for each path
 _GNS_PARTICIPANT_SITE_NAMES_CACHE=None 
 @click.pass_context
-def _gns_participant_site_names(ctx, pathnames=['.'], force=False):
+def _gns_participant_site_names(ctx, pathnames=['.'], force=False, **kwargs):
     global _GNS_PARTICIPANT_SITE_NAMES_CACHE
     if not force and _GNS_PARTICIPANT_SITE_NAMES_CACHE is not None:
         return _GNS_PARTICIPANT_SITE_NAMES_CACHE
@@ -1938,7 +1883,7 @@ def do_gns_keep_on_has(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_gns_keep_on_del(ctx, *args, **kwargs):
-    if kwargs['name'] not in _gns_participant_site_names():
+    if kwargs['name'] not in _gns_participant_site_names(**kwargs):
         errmsg = "'%s' is not a valid site name\n" % (kwargs['name'])
         raise click.UsageError(errmsg, ctx)
     _cmd_retcode(hss.sites_keep_on_del, **kwargs)
@@ -1949,7 +1894,7 @@ def do_gns_keep_on_del(ctx, *args, **kwargs):
 @param_nonfiles
 @param_defaults
 def do_gns_keep_on_add(ctx, *args, **kwargs):
-    if kwargs['name'] not in _gns_participant_site_names():
+    if kwargs['name'] not in _gns_participant_site_names(**kwargs):
         errmsg = "'%s' is not a valid site name\n" % (kwargs['name'])
         raise click.UsageError(errmsg, ctx)
     _cmd_retcode(hss.sites_keep_on_add, **kwargs)

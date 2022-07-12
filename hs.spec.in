@@ -14,7 +14,7 @@ Source1:        hs_bash_completion
 Source2:        hs_helpers.sh
 
 Requires:       bash-completion
-Requires:       python2-click
+Requires:       python3-click
 
 %description
 CLI utility for manipulating metadata in the Hammerspace namespace over the shadow filesystem
@@ -31,7 +31,7 @@ mkdir -p $RPM_BUILD_ROOT/etc/bash_completion.d/
 %files
 %defattr(-,root,root,-)
 /usr/bin/hs
-/usr/lib/python2.7/site-packages/*
+/usr/lib/python3*/site-packages/*
 /etc/bash_completion.d/*
 
 %changelog

@@ -57,9 +57,48 @@ shell completion
 The above pip and rpm install methods don't configure shell completion.  The
 short version, for bash, to enable system wide completions, add this file
     $ cat /etc/bash_completion.d/hs_bash_completion
-    eval "$(_HS_COMPLETE=source hs)"
+    eval "$(LANG=en_US.utf8 _HS_COMPLETE=source hs)"
 
-More details on how to enable shell completion are available from the 
+More details on how to enable shell completion are available from the
 [Click Project](https://click.palletsprojects.com/en/6.x/bashcomplete/)
+
+
+Installing on a system that is not connected to the internet
+============================================================
+
+Centos8
+-------
+
+Install base python3 RPMs on target system
+    python3 python3-pip python3-setuptools
+
+move on to 'Collect and install wheel files for any Distro'
+
+
+Collect and install wheel files for any Distro
+----------------------------------------------
+
+On an internet connected system, generate the pip requirements and download all
+needd packages.
+    python3 -m hstk_for_req
+    source hstk_for_req/bin/activate
+    pip3 install hstk
+    mkdir /tmp/hstk_pkgs
+    cd /tmp/hstk_pkgs
+    pip3 freeze > requirements.txt
+
+Note that you may need to remove some old packages installed by RPM for
+download to work, I removed the 'gpg==' and 'rpm==' lines from the generated
+requirements.txt
+
+    pip3 download -r requirements.txt
+
+Copy that directory over to your offline system and (assuming you are going to
+install into a venv)
+
+    python3 -m venv hstk
+    source hstk/bin/activate
+    cd /path/to/hstk_pkgs       # copied over to this node
+    pip3 install *.whl
 
 
