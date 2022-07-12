@@ -1,6 +1,6 @@
 Hammerspace CLI tool and python toolkit (hstk)
 
-Supports Hammerspace release 4.6.0 and later.
+Supports Hammerspace release 4.5.x and later, and python 3
 
 Install
 =======
@@ -15,7 +15,7 @@ all users in the system libraries or for just your account.
 
 As your user (installs in your account only) or using sudo/root (installs in system directories):
 
-$ pip install hstk
+$ pip3 install hstk
 
 This will pull down the needed dependencies as well.  This does not install the
 bash completions, see [shell completions](shell-completions)
@@ -46,7 +46,7 @@ building hstk rpm
 
 $ git clone https://github.com/hammer-space/hstk.git
 $ cd hstk
-$ python2 setup.py bdist_rpm
+$ python3 setup.py bdist_rpm
 $ ls -l dist/hstk-4.1.0.1-1.noarch.rpm
 -rw-r----- 1 root root 20652 Dec 18 20:01 dist/hstk-4.1.0.1-1.noarch.rpm
 
@@ -101,4 +101,18 @@ install into a venv)
     cd /path/to/hstk_pkgs       # copied over to this node
     pip3 install *.whl
 
+
+Changelog
+=========
+
+4.6.6.0
+-------
+
+* No longer works with Hammerspace 4.6.4 and earlier
+* Removed support for python2
+* Moved to shadow gateway file for issuing commands, benefits include
+  * no limitation on length of hammerscript command
+  * doesn’t lock out the directory on the client it was run from on long running commands
+  * better support for windows
+* For windows, is write a bunch of null padding.  For some reason if the write to the shadow gateway file isn't big enough it will not be pushed all the way through the stack on a windows client.
 
