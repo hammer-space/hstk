@@ -234,7 +234,6 @@ class ShadCmd(object):
 
         # First open, send the command
         vnprint(f'open( {gw} )')
-        unidprint(f'open( {gw} )')
         if self.dry_run:
             fd = io.StringIO()
         else:
@@ -250,25 +249,22 @@ class ShadCmd(object):
             else:
                 raise e
         vnprint(f'write( {cmd} )')
-        unidprint(f'write( {cmd} )')
         fd.write(cmd)
 
         vnprint(f'close( {gw} )')
-        unidprint(f'close( {gw} )')
         fd.close()
 
         # open again to collect the results
         vnprint(f'open( {gw} )')
-        unidprint(f'open( {gw} )')
         if self.dry_run:
             fd = io.StringIO('dry run output')
         else:
             fd = gw.open('r')
-        vnprint('read()')
-        unidprint('read()')
+        vnprint('calling read()')
         ret = fd.readlines()
+        vnprint(f'read() returned {len(ret)} lines {len("".join(ret))} bytes')
+
         vnprint(f'close( {gw} )')
-        unidprint(f'close( {gw} )')
         fd.close()
 
         return ret
@@ -844,14 +840,6 @@ def vnprint(ctx, line):
         if ctx.obj.dry_run:
             tag = 'N: '
         print(tag + line)
-
-@click.pass_context
-def unidprint(ctx, line):
-    """ Print a line encoded to unicode escape characters if debug, for unicode debugging """
-    if ctx.obj.debug > 0:
-        if isinstance(line, str):
-            line = line.encode('unicode-escape')
-        print('D unicode-escaped: '.encode('unicode-escape') + line)
 
 @cli.command(name='rm', help="Fast offloaded rm -rf")
 @click.option('-r', '-R', '--recursive', is_flag=True, help="Required for fast mode, remove directories and their contents recursively")
