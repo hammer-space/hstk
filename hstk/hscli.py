@@ -28,10 +28,10 @@ import hstk.hsscript as hss
 # Windows compatability stuff
 if platform.system().startswith('Windows') or platform.system().startswith('CYGWIN'):
     WINDOWS = True
-    WIN_PADDING = '\0'*50
+    WIN_PADDING = b'\0'*50
 else:
     WINDOWS = False
-    WIN_PADDING = ''
+    WIN_PADDING = b''
 
 
 # Helper object for containing global settings to be passed with context
@@ -235,10 +235,10 @@ class ShadCmd(object):
         work_id = hex(random.randint(0,99999999))
         if fname.is_dir():
             gw = fname
-            cmd = './'
+            cmd = b'./'
         else:
             gw = fname.parent
-            cmd = './' + fname.name
+            cmd = b'./' + fname.name.encode()
         gw = gw / f'.fs_command_gateway {work_id}'
 
         # First open, send the command
@@ -246,10 +246,10 @@ class ShadCmd(object):
         if self.dry_run:
             fd = io.StringIO()
         else:
-            fd = gw.open('w')
+            fd = gw.open('wb')
 
         try:
-            cmd += self.shadgen(**self.kwargs)
+            cmd += self.shadgen(**self.kwargs).encode()
         except ValueError as e:
             if (        ('value' not in self.kwargs)
                     or  ('value' in self.kwargs and (not self.kwargs['value'])) ):
@@ -558,7 +558,7 @@ def tag():
 
 rekognition_tag_short_help = "[sub] inode metadata: schema no, value yes"
 rekognition_tag_help = """
-rekognition_tag 
+rekognition_tag
 sub commands are used to view metadata added to an object by AWS's
 rekognition service.  Contact support for details on how to configure
 rekognition.
@@ -1816,7 +1816,7 @@ def keep_on_site():
 cli.add_command(keep_on_site)
 
 # only good for single share, but get new invocation for each path
-_GNS_PARTICIPANT_SITE_NAMES_CACHE=None 
+_GNS_PARTICIPANT_SITE_NAMES_CACHE=None
 @click.pass_context
 def _gns_participant_site_names(ctx, pathnames=['.'], force=False, **kwargs):
     global _GNS_PARTICIPANT_SITE_NAMES_CACHE
